@@ -1,0 +1,21 @@
+model: hf
+tasks:
+  - livecodebench
+  # - code2text_python
+model_args:
+  # - "pretrained=Qwen/Qwen2.5-Coder-1.5B"
+  - "pretrained=Qwen/Qwen2.5-Coder-3B"
+  # - "pretrained=TheBloke/CodeLlama-7B-Instruct-GPTQ,gptq_enabled=True,torch_dtype=bfloat16"
+  # - "pretrained=deepseek-ai/deepseek-coder-6.7b-instruct,torch_dtype=bfloat16"
+  # - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct,torch_dtype=bfloat16"
+  # - "pretrained=stabilityai/stable-code-3b"
+  # - "pretrained=deepseek-ai/deepseek-coder-1.3b-base"
+  # - "pretrained=bigcode/starcoder2-3b,torch_dtype=bfloat16"
+  # - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct-AWQ,gptq_enabled=True"
+bnb_config:
+  # - null
+  - null
+  # - "load_in_4bit=True"
+  # - null
+  # - null
+  # - null
