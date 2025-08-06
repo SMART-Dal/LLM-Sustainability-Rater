@@ -7,6 +7,7 @@ venv/
 ENV/
 env/
 *.env
+sus_venv/
 
 # Python bytecode and build artifacts
 __pycache__/
