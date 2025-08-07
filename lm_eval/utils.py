@@ -650,6 +650,7 @@ def clean_output_data(data: dict):
 
     cleaned_data = {
         "model": data["model"],
+        "experiments_run": data["experiments_run"],
         **cleaned_data,
         **{k: round(convert_kwh_to_joules(data[k]), 4) for k in energy_keys},
         **{k: v for k, v in data.items() if k in remaining_keys},
