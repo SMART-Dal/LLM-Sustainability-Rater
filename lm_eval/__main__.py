@@ -309,6 +309,12 @@ def setup_parser() -> argparse.ArgumentParser:
         default=None,
         help="""JSON string metadata to pass to task configs, for example '{"max_seq_lengths":[4096,8192]}'. Will be merged with model_args. Can also be set in task config.""",
     )
+    parser.add_argument(
+        "--experiments_run",
+        type=str,
+        default=None,
+        help="""A string that specifies the purpose of the run and will be stored in your final jsonl result file.""",
+    )
     return parser
 
 
@@ -525,6 +531,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
             f"batch_size: {args.batch_size}{f' ({batch_sizes})' if batch_sizes else ''}"
         )
 
+        results["experiments_run"] = args.experiments_run
         utils.append_to_jsonl(results)
 
         print(make_table(results))
