@@ -540,6 +540,7 @@ class HFLM(TemplateLM):
             revision=revision,
             trust_remote_code=trust_remote_code,
             gguf_file=gguf_file,
+            local_files_only=True
         )
 
     def _create_bnb_object(self, bnb_config: str) -> BitsAndBytesConfig:
@@ -633,6 +634,7 @@ class HFLM(TemplateLM):
                 revision=revision,
                 trust_remote_code=trust_remote_code,
                 gguf_file=gguf_file,
+                local_files_only=True,
                 **model_kwargs,
             )
         else:
@@ -756,7 +758,7 @@ class HFLM(TemplateLM):
         if tokenizer:
             if isinstance(tokenizer, str):
                 self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                    tokenizer, **kwargs
+                    tokenizer, local_files_only=True, **kwargs
                 )
             else:
                 assert isinstance(
@@ -771,7 +773,7 @@ class HFLM(TemplateLM):
                 # get the HF hub name via accessor on model
                 model_name = self.model.name_or_path
             self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-                model_name, **kwargs
+                model_name, local_files_only=True, **kwargs
             )
         return None
 
