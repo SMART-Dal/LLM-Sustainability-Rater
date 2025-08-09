@@ -41,7 +41,9 @@ dependencies = [
     "more_itertools",
     "codecarbon",
     "optimum",
-    "gptqmodel"
+    "bitsandbytes",
+    "gptqmodel",
+    "python-dotenv"
 ]
 
 [tool.setuptools.packages.find]
