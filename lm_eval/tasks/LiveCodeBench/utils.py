@@ -426,8 +426,8 @@ def doc_to_text_with_format(doc: dict) -> str:
     FORMATTING_MESSAGE_WITH_STARTER_CODE = "You will use the following starter code to write the solution to the problem and enclose your code within delimiters."
     FORMATTING_WITHOUT_STARTER_CODE = "Read the inputs from stdin solve the problem and write the answer to stdout (do not directly test on the sample inputs). Enclose your code within delimiters as follows."
     SYSTEM_PROMPT = (
-        "You are an expert competitive programmer. Write a **complete** Python 3 "
-        "solution that {}. Make sure you only generate python executable code and you SHOULD NOT add any explanation.\n\n"
+        "You are an expert competitive programmer. Write a Python 3 "
+        "solution that {} and passes all tests. Make sure you only generate python executable code and you SHOULD NOT add any explanation. Close the code block with triple backticks after writing your code.\n\n"
         "# Problem:\n"
     )
 
@@ -519,11 +519,16 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, float]:
 
     # We typically evaluate the first generation for pass@1
     # generated_code = postprocess_generation(results[0])
+
+    # if it didn't follow our instruction and still generated ```python, we will capture that
     python_starter = results[0].find("```python")
     if python_starter != -1:
         end_tag = results[0].find("```", python_starter + 9)  # 9 is "```python" length
-        generated_code = results[0][python_starter+9:end_tag]
-    else:
+        if end_tag != -1:
+            generated_code = results[0][python_starter+9:end_tag]
+        else:
+            generated_code = results[0][python_starter+9:]
+    else:  # if it followed our instruction, we will capture the ending backticks
         found_index = results[0].find("```")
         generated_code = results[0][:found_index] if found_index != -1 else results[0]
     # Transform the document to ensure input_output field exists
