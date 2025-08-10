@@ -1409,8 +1409,8 @@ class HFLM(TemplateLM):
             context_enc = context_enc.to(self.device)
             attn_masks = attn_masks.to(self.device)
 
-            print(context_enc.shape[1])
-            print("+++++++++++++++++++++++++++++")
+            # print(context_enc.shape[1])
+            # print("+++++++++++++++++++++++++++++")
             # if "max_length" not in kwargs:
             #     kwargs["max_length"] = context_enc.shape[1] + max_gen_toks
 
@@ -1429,8 +1429,8 @@ class HFLM(TemplateLM):
                     cont_toks = cont_toks[context_enc.shape[1] :]
 
                 s = self.tok_decode(cont_toks)
-                print(len(cont_toks))
-                print("--------------------")
+                # print(len(cont_toks))
+                # print("--------------------")
                 # use secondary stop seqs to cut off should-have-been-stopped content post-hoc
                 for term in until:
                     if len(term) > 0:
