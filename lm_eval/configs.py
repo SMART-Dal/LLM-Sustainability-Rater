@@ -10,3 +10,5 @@ OUTPUT_FILE.touch(exist_ok=True)
 
 
 YAML_RUN_CONFIG = MAIN_DIR / "run_config.yaml"
+
+DOTENV_FILE = MAIN_DIR.parent / ".env"
