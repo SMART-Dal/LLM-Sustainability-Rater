@@ -519,8 +519,13 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, float]:
 
     # We typically evaluate the first generation for pass@1
     # generated_code = postprocess_generation(results[0])
-    found_index = results[0].find("```")
-    generated_code = results[0][:found_index] if found_index != -1 else results[0]
+    python_starter = results[0].find("```python")
+    if python_starter != -1:
+        end_tag = results[0].find("```", python_starter + 9)  # 9 is "```python" length
+        generated_code = results[0][python_starter+9:end_tag]
+    else:
+        found_index = results[0].find("```")
+        generated_code = results[0][:found_index] if found_index != -1 else results[0]
     # Transform the document to ensure input_output field exists
     transformed_doc = transform_data_item(doc.copy())
     transformed_doc["input_output"] = transformed_doc["evaluation_sample"]
