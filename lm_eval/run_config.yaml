@@ -31,24 +31,24 @@ model_args:
   
 
 bnb_config:
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - null
-  - "load_in_4bit=True"
   - null
   - null
   - null
-  - "load_in_4bit=True"
   - null
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
   - null
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
   - null
 
 experiments_run: "main"
