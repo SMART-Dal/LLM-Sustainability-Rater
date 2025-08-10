@@ -3,19 +3,52 @@ tasks:
   - livecodebench
   # - code2text_python
 model_args:
-  # - "pretrained=Qwen/Qwen2.5-Coder-1.5B"
-  - "pretrained=Qwen/Qwen2.5-Coder-3B"
-  # - "pretrained=TheBloke/CodeLlama-7B-Instruct-GPTQ,gptq_enabled=True,torch_dtype=bfloat16"
-  # - "pretrained=deepseek-ai/deepseek-coder-6.7b-instruct,torch_dtype=bfloat16"
-  # - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct,torch_dtype=bfloat16"
-  # - "pretrained=stabilityai/stable-code-3b"
-  # - "pretrained=deepseek-ai/deepseek-coder-1.3b-base"
-  # - "pretrained=bigcode/starcoder2-3b,torch_dtype=bfloat16"
-  # - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct-AWQ,gptq_enabled=True"
+  - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
+  - "pretrained=codellama/CodeLlama-7b-Instruct-hf"
+  - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct"
+  - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct"
+  - "pretrained=Qwen/Qwen2.5-Coder-1.5B"
+  - "pretrained=deepseek-ai/deepseek-coder-1.3b-base"
+  - "pretrained=Salesforce/codegen-350M-mono"
+  - "pretrained=deepseek-ai/deepseek-coder-7b-instruct-v1.5"
+  - "pretrained=Qwen/Qwen2.5-Coder-0.5B"
+  - "pretrained=01-ai/Yi-Coder-9B"
+  - "pretrained=rombodawg/rombos_Replete-Coder-Llama3-8B"
+  - "pretrained=uukuguy/speechless-code-mistral-7b-v1.0"
+  - "pretrained=stabilityai/stable-code-3b"
+  - "pretrained=codellama/CodeLlama-7b-Python-hf"
+  - "pretrained=ByteDance-Seed/Seed-Coder-8B-Instruct"
+  - "pretrained=Qwen/CodeQwen1.5-7B-Chat"
+  - "pretrained=ibm-granite/granite-8b-code-base-4k"
+  - "pretrained=Salesforce/codegen2-7B_P"
+  - "pretrained=Salesforce/codegen-2B-mono"
+  
+
+
+  # - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct-AWQ"
+  # - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct-AWQ"
+  # - "pretrained=unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit"
+  
+
 bnb_config:
-  # - null
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
   - null
-  # - "load_in_4bit=True"
-  # - null
-  # - null
-  # - null
+  - "load_in_4bit=True"
+  - null
+  - null
+  - null
+  - "load_in_4bit=True"
+  - null
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
+  - null
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
+  - "load_in_4bit=True"
+  - null
+
+experiments_run: "main"
