@@ -323,6 +323,17 @@ def parse_eval_args(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return parser.parse_args()
 
 
+import gc
+import torch
+
+def get_torch_size():
+    allocated = torch.cuda.memory_allocated(0) / 1024**2
+    cached = torch.cuda.memory_reserved(0) / 1024**2
+    print(
+        f"[cuda:{0}] PyTorch allocated: {allocated:.1f} MB | reserved/cached: {cached:.1f} MB"
+    )
+
+
 def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
     if not args:
         # we allow for args to be passed externally, else we parse them ourselves
@@ -530,7 +541,7 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
             f"{args.model} ({args.model_args}), gen_kwargs: ({args.gen_kwargs}), limit: {args.limit}, num_fewshot: {args.num_fewshot}, "
             f"batch_size: {args.batch_size}{f' ({batch_sizes})' if batch_sizes else ''}"
         )
-
+        get_torch_size()
         results["experiments_run"] = args.experiments_run
         utils.append_to_jsonl(results)
 
@@ -543,7 +554,14 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
             wandb_logger.run.finish()
 
 
+"""
+We do not use following functionm which its purpose is running each model on each task in a single process iteratively, 
+because energy measurement is so sensitive, and we need to spawn a new process for each model and task we have, 
+otherwise if anything even small is left in memory it would corrupt our measurement.
+"""
 # def main_evaluate():
+#     import yaml
+#     from copy import deepcopy
 #     with open(YAML_RUN_CONFIG, "r") as f:
 #         cfg = yaml.safe_load(f)
 
@@ -559,27 +577,11 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
 #             copied_args.tasks = task
 #             copied_args.model_args = model_arg
 #             copied_args.bnb_config = bnb_config
-#             from pynvml import nvmlInit, nvmlDeviceGetHandleByIndex, nvmlDeviceGetMemoryInfo
-
-#             nvmlInit()
-#             handle = nvmlDeviceGetHandleByIndex(0)
-#             info = nvmlDeviceGetMemoryInfo(handle)
-
-#             print(f"Total: {info.total/1024**2:.1f} MB")
-#             print(f"Used:  {info.used/1024**2:.1f} MB")
-#             print(f"Free:  {info.free/1024**2:.1f} MB")
+            
 #             cli_evaluate(copied_args)
+#             torch.cuda.empty_cache()
+#             get_torch_size()
 
-#             # del cfg
-#         # if you ever referenced pipe, model, tokenizer, etc. at top level, del them too
-#         # del pipe, model, tokenizer
-
-#             import gc, torch
-#             gc.collect()                # free orphaned Python objects
-#             torch.cuda.empty_cache()    # release PyTorch’s caching allocator
-#             # PyTorch 2.0+ only: collect any leftover IPC tensors
-#             if hasattr(torch.cuda, "ipc_collect"):
-#                 torch.cuda.ipc_collect()
 
 
 if __name__ == "__main__":
