@@ -4,13 +4,16 @@ tasks:
   # - code2text_python
 model_args:
   - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
+  - "pretrained=bigcode/starcoderbase-1b"
+  - "pretrained=bigcode/starcoder2-3b"
   - "pretrained=codellama/CodeLlama-7b-Instruct-hf"
   - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct"
   - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct"
   - "pretrained=Qwen/Qwen2.5-Coder-1.5B"
   - "pretrained=deepseek-ai/deepseek-coder-1.3b-base"
-  - "pretrained=Salesforce/codegen-350M-mono"
   - "pretrained=deepseek-ai/deepseek-coder-7b-instruct-v1.5"
+  - "pretrained=bigcode/starcoder2-7b"
+  - "pretrained=Salesforce/codegen-350M-mono"
   - "pretrained=Qwen/Qwen2.5-Coder-0.5B"
   - "pretrained=01-ai/Yi-Coder-9B"
   - "pretrained=rombodawg/rombos_Replete-Coder-Llama3-8B"
@@ -19,6 +22,7 @@ model_args:
   - "pretrained=codellama/CodeLlama-7b-Python-hf"
   - "pretrained=ByteDance-Seed/Seed-Coder-8B-Instruct"
   - "pretrained=Qwen/CodeQwen1.5-7B-Chat"
+  - "pretrained=ise-uiuc/Magicoder-S-DS-6.7B"
   - "pretrained=ibm-granite/granite-8b-code-base-4k"
   - "pretrained=Salesforce/codegen2-7B_P"
   - "pretrained=Salesforce/codegen-2B-mono"
@@ -31,6 +35,10 @@ model_args:
   
 
 bnb_config:
+  - null
+  - null
+  - null
+  - null
   - null
   - null
   - null
