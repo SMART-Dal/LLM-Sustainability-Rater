@@ -867,7 +867,7 @@ class ConfigurableTask(Task):
         self.download(self.config.dataset_kwargs)
         # FOR DEBUG PURPOSE: REMOVE IT LATER
         # self.dataset["test"] = self.dataset["test"].select([30, 50, 120, 240, 580, 770, 1000])
-        self.dataset["test"] = self.dataset["test"].select([1,2,3,4,5,6,7,8,9,10, 11])
+        # self.dataset["test"] = self.dataset["test"].select([1,2,3,4,5,6,7,8,9,10, 11])
         self._training_docs = None
         self._fewshot_docs = None
 
