@@ -8,7 +8,6 @@ test_split: test
 process_docs: !function utils.process_docs
 output_type: generate_until
 generation_kwargs:
-  num_beams: 10
   max_gen_toks: 256
   until:
     - "</s>"
