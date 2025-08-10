@@ -419,6 +419,28 @@ def grade_stdio(
 
     return all_results, {'execution time': total_execution_time}
 
+def replacement_func(code, pat, prefix):
+    code = code.replace(prefix + pat, prefix + "sys." + pat)
+    if "import sys" not in code:
+        code = "import sys\n" + code
+    return code
+
+def convert_stdout_calling(code: str) -> str:
+    import re
+    patterns = ["stdout.write(", "stdout.writelines("]
+    for pat in patterns:
+        for prefix in ["\n", "\t", "\r\n"]:
+            if (prefix + pat in code) and ("from sys import std" in code):
+                code = replacement_func(code, pat, prefix)
+
+        if (" " + pat in code) and (not re.search(r"sys\.[ ]+stdout", code)) and ("from sys import std" in code):
+                code = replacement_func(code, pat, " ")
+
+        if code.startswith(pat) and "from sys import std" in code:
+            code = replacement_func(code, pat, "")
+
+    return code
+
 
 def run_test(sample, test=None, debug=False, timeout=6):
     """
@@ -463,7 +485,8 @@ def run_test(sample, test=None, debug=False, timeout=6):
             logger.info(f'loading test code = {datetime.now().time()}')
 
         if which_type == CODE_TYPE.call_based:
-            test = sample["starter_code"] + test
+            if "class Solution" not in test:
+                test = sample["starter_code"] + test
             # print(test)
             output_logger.info(test)
             signal.alarm(timeout)
@@ -487,6 +510,7 @@ def run_test(sample, test=None, debug=False, timeout=6):
             # sol
             # if code has if __name__ == "__main__": then remove it
             # print(test)
+            test = convert_stdout_calling(test)
             output_logger.info(test)
             signal.alarm(timeout)
             try:
