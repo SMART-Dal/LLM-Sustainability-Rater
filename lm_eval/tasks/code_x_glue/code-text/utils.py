@@ -1,6 +1,8 @@
 import re
 import datasets
+import logging
 
+output_logger = logging.getLogger("generation_logger")
 
 def process_docs(dataset: datasets.Dataset):
     dataset = dataset.select([i for i in range(1000)])
@@ -24,6 +26,20 @@ def doc_to_target(doc):
     # targets = " ".join(targets.strip().split())
     return clean_text(doc["docstring"])
 
+def parse_output(text: str) -> str:
+    start_idx = text.find("\"""")
+    if start_idx == -1:
+        return text
+    end_idx = text.find("\"""", start_idx + 3)
+    if end_idx == -1:
+        return text
+    
+    return text[start_idx + 3: end_idx]
+
 def build_predictions(resps: list[list[str]], docs: list[dict]) -> list[list[str]]:
-    print(resps)
-    return [[clean_text(s) for s in inner][0] for inner in resps]
+    new_res = [parse_output([clean_text(s) for s in inner][0]) for inner in resps]
+     
+    for smp in new_res:
+        output_logger.info(smp)
+    output_logger.info("-" * 30)
+    return new_res
