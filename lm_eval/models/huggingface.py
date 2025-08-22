@@ -39,6 +39,7 @@ from lm_eval.models.utils import (
     stop_sequences_criteria,
 )
 from codecarbon import EmissionsTracker
+from transformers import set_seed
 
 
 eval_logger = logging.getLogger(__name__)
@@ -181,6 +182,8 @@ class HFLM(TemplateLM):
         self._get_backend(
             config=self.config, backend=backend, trust_remote_code=trust_remote_code
         )
+
+        set_seed(1234)
 
         emission_tracker.start_task("tokenizer_initialization")
         # load tokenizer so we know tokenizer vocabulary size before loading model and PEFT
