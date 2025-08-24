@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 LOG_DIR = Path(__file__).parents[2] / "logs"
 LOG_DIR.mkdir(exist_ok=True, parents=True)
-LOG_FILE = LOG_DIR / "outputs2.log"
+LOG_FILE = LOG_DIR / "reproducibility.log"
 
 # Configure a separate logger to observe model prediction vs actual results
 output_logger = logging.getLogger("generation_logger")

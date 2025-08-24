@@ -101,6 +101,17 @@ class HFLM(TemplateLM):
         **kwargs,
     ) -> None:
         super().__init__()
+        set_seed(1234)
+        torch.cuda.manual_seed_all(1234)
+        torch.use_deterministic_algorithms(True)
+
+        # 2. Force deterministic algorithms
+        torch.use_deterministic_algorithms(True)
+
+        # 3. Ensure reproducibility in cuDNN
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        
         # optionally: take in an already-initialized transformers.PreTrainedModel
         if not isinstance(pretrained, str):
             eval_logger.warning(
@@ -183,7 +194,7 @@ class HFLM(TemplateLM):
             config=self.config, backend=backend, trust_remote_code=trust_remote_code
         )
 
-        set_seed(1234)
+        
 
         emission_tracker.start_task("tokenizer_initialization")
         # load tokenizer so we know tokenizer vocabulary size before loading model and PEFT
@@ -221,6 +232,7 @@ class HFLM(TemplateLM):
                 bnb_config=bnb_config,
                 **kwargs,
             )
+            self._model.eval()
         emission_tracker.stop_task()
 
         # access self._model through self.model property outside this method
