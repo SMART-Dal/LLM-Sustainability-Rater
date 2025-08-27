@@ -9,6 +9,7 @@ process_docs: !function utils.process_docs
 output_type: generate_until
 generation_kwargs:
   max_gen_toks: 256
+  do_sample: false
   until:
     - "</s>"
 doc_to_text: !function utils.doc_to_text
