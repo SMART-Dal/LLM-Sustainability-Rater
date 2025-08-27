@@ -340,8 +340,6 @@ def cli_evaluate(args: Union[argparse.Namespace, None] = None) -> None:
         parser = setup_parser()
         args = parse_eval_args(parser)
 
-
-    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
     if args.wandb_args:
         wandb_args_dict = simple_parse_args_string(args.wandb_args)
         wandb_config_args_dict = simple_parse_args_string(args.wandb_config_args)
