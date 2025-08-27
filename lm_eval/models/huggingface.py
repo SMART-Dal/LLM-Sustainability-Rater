@@ -102,16 +102,6 @@ class HFLM(TemplateLM):
     ) -> None:
         super().__init__()
         set_seed(1234)
-        torch.cuda.manual_seed_all(1234)
-        torch.use_deterministic_algorithms(True)
-
-        # 2. Force deterministic algorithms
-        torch.use_deterministic_algorithms(True)
-
-        # 3. Ensure reproducibility in cuDNN
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        
         # optionally: take in an already-initialized transformers.PreTrainedModel
         if not isinstance(pretrained, str):
             eval_logger.warning(
