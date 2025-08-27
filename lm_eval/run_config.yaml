@@ -3,7 +3,7 @@ tasks:
   - livecodebench
   # - code2text_python
 model_args:
-  # - "pretrained=01-ai/Yi-Coder-1.5B"
+  - "pretrained=01-ai/Yi-Coder-1.5B,torch_dtype=float32"
   # - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
   # - "pretrained=bigcode/starcoderbase-1b"
   # - "pretrained=bigcode/starcoder2-3b"
@@ -11,7 +11,7 @@ model_args:
   # - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct"
   # - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct"
   - "pretrained=Qwen/Qwen2.5-Coder-1.5B,torch_dtype=float32"
-  # - "pretrained=deepseek-ai/deepseek-coder-1.3b-base"
+  - "pretrained=deepseek-ai/deepseek-coder-1.3b-base,torch_dtype=float32"
   # - "pretrained=deepseek-ai/deepseek-coder-7b-instruct-v1.5"
   # - "pretrained=bigcode/starcoder2-7b"
   # - "pretrained=Salesforce/codegen-350M-mono"
@@ -35,9 +35,9 @@ model_args:
 bnb_config:
   # - null
   # - null
-  # - null
   - null
-  # - null
+  - null
+  - null
   # - null
   # - null
   # - null
