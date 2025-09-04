@@ -552,6 +552,10 @@ def weighted_f1_score(items):
     return fscore
 
 
+def convert_kwh_to_joules(num: float) -> float:
+    return num * (3.6 * 1e6)
+
+
 def accumulate_task_emissions(tracker: EmissionsTracker):
     single_value_task = tracker._tasks.get("instances_inference")
 
@@ -561,9 +565,6 @@ def accumulate_task_emissions(tracker: EmissionsTracker):
         "run_id": None,
         "experiment_id": None,
         "emissions_rate": None,
-        "cpu_power": None,
-        "gpu_power": None,
-        "ram_power": None,
         "country_name": None,
         "country_iso_code": None,
         "region": None,
@@ -584,6 +585,18 @@ def accumulate_task_emissions(tracker: EmissionsTracker):
         "pue": None,
     }
 
+    task_specific_data_columns = [
+        "cpu_power",
+        "gpu_power",
+        "ram_power",
+        "duration",
+        "cpu_energy",
+        "gpu_energy",
+        "ram_energy",
+    ]
+
+    task_specific_data_values = {}
+
     multi_value_columns = {
         "duration": 0,
         "emissions": 0,
@@ -594,18 +607,18 @@ def accumulate_task_emissions(tracker: EmissionsTracker):
     }
 
     for task_name, emission_data in tracker._tasks.items():
-        for col in multi_value_columns.keys(): 
+        for col in multi_value_columns.keys():
             multi_value_columns[col] += getattr(emission_data.emissions_data, col)
-    
+        for col in task_specific_data_columns:
+            val = getattr(emission_data.emissions_data, col)
+            task_specific_data_values[f"{task_name}_{col}"] = (
+                val if not col.endswith("energy") else round(convert_kwh_to_joules(val), 4)
+            )
+
     for key in single_value_columns:
         single_value_columns[key] = getattr(single_value_task.emissions_data, key)
-    
-    return {**multi_value_columns, **single_value_columns}
 
-
-
-def convert_kwh_to_joules(num: float) -> float:
-    return num * (3.6 * 1e6)
+    return {**multi_value_columns, **single_value_columns, **task_specific_data_values}
 
 
 def clean_output_data(data: dict):
@@ -625,9 +638,6 @@ def clean_output_data(data: dict):
         "duration",
         "emissions",
         "emissions_rate",
-        "cpu_power",
-        "gpu_power",
-        "ram_power",
         "country_name",
         "country_iso_code",
         "region",
@@ -648,12 +658,23 @@ def clean_output_data(data: dict):
         "pue",
     ]
 
+    task_specific_columns = (
+        "_cpu_power",
+        "_gpu_power",
+        "_ram_power",
+        "_duration",
+        "_cpu_energy",
+        "_gpu_energy",
+        "_ram_energy",
+    )
+
     cleaned_data = {
         "model": data["model"],
         "experiments_run": data["experiments_run"],
         **cleaned_data,
         **{k: round(convert_kwh_to_joules(data[k]), 4) for k in energy_keys},
         **{k: v for k, v in data.items() if k in remaining_keys},
+        **{k: v for k, v in data.items() if k.endswith(task_specific_columns)} 
     }
     return cleaned_data
 
