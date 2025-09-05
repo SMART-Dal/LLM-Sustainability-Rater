@@ -153,7 +153,7 @@ def simple_evaluate(
     """
     emission_tracker = EmissionsTracker(
             measure_power_secs=1,
-            tracking_mode="machine",
+            tracking_mode="process",
             save_to_file=False,
             log_level="error"
         )
