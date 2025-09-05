@@ -180,7 +180,7 @@ def simple_evaluate(
             measure_power_secs=1,
             tracking_mode="process",
             save_to_file=False,
-            log_level="error"
+            # log_level="error"
         )
 
     code_carbon_logger_handler()
