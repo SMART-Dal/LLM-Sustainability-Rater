@@ -38,6 +38,7 @@ from lm_eval.utils import (
     accumulate_task_emissions,
 )
 from codecarbon import EmissionsTracker
+import sys
 
 
 if TYPE_CHECKING:
@@ -45,6 +46,30 @@ if TYPE_CHECKING:
     from lm_eval.api.task import Task
 
 eval_logger = logging.getLogger(__name__)
+
+
+def code_carbon_logger_handler():
+    logger = logging.getLogger("codecarbon")
+    while logger.hasHandlers():
+        logger.removeHandler(logger.handlers[0])
+
+    # Define a log formatter
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
+    )
+
+    # Create file handler which logs debug messages
+    fh = logging.FileHandler(f"codecarbon_measurement.log")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(formatter)
+    consoleHandler.setLevel(logging.WARNING)
+    logger.addHandler(consoleHandler)
+
+    logger.debug("GO!")
 
 
 @positional_deprecated
@@ -157,6 +182,8 @@ def simple_evaluate(
             save_to_file=False,
             log_level="error"
         )
+
+    code_carbon_logger_handler()
     results = None
     raised_exception = None
     try:
