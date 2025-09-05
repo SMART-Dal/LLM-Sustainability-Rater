@@ -72,6 +72,52 @@ def code_carbon_logger_handler():
     logger.debug("GO!")
 
 
+import os, subprocess, tempfile, signal, atexit, sys
+from contextlib import contextmanager
+
+@contextmanager
+def perf_energy(events=("power/energy-pkg/", "power/energy-ram/"),
+                interval_ms=None, system_wide=False, csv=True):
+    """
+    Measure energy with `perf stat` while the block executes.
+    Returns path to the captured perf output file.
+    """
+    pid = os.getpid()
+    out = tempfile.NamedTemporaryFile(delete=False, prefix="perf_energy_", suffix=".txt")
+    out_path = out.name
+    out.close()
+
+    cmd = ["perf", "stat", "--no-big-num"]
+    if csv:
+        cmd += ["-x", ","]
+    if interval_ms:
+        cmd += ["-I", str(interval_ms)]
+    if system_wide:
+        cmd += ["-a"]              # system-wide (includes everything)
+    else:
+        cmd += ["-p", str(pid)]    # just this Python process & its threads
+    for e in events:
+        cmd += ["-e", e]
+
+    # perf writes stats to stderr by default; capture there
+    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
+                            stderr=open(out_path, "wb"), close_fds=True)
+
+    def _cleanup():
+        if proc.poll() is None:
+            # SIGINT asks perf to print final summary and exit cleanly
+            proc.send_signal(signal.SIGINT)
+            proc.wait(timeout=5)
+
+    atexit.register(_cleanup)
+
+    try:
+        yield out_path
+    finally:
+        _cleanup()
+
+
+
 @positional_deprecated
 def simple_evaluate(
     model,
@@ -183,7 +229,6 @@ def simple_evaluate(
             log_level="error"
         )
 
-    code_carbon_logger_handler()
     results = None
     raised_exception = None
     try:
@@ -630,10 +675,14 @@ def evaluate(
             for _ in range(padding_requests[reqtype]):
                 cloned_reqs.extend([req] * req.repeats)
 
-        emission_tracker.start_task("instances_inference")
+        # emission_tracker.start_task("instances_inference")
         # run requests through model
-        resps = getattr(lm, reqtype)(cloned_reqs)
-        emission_tracker.stop_task()
+        with perf_energy(interval_ms=1000) as perf_file:
+            resps = getattr(lm, reqtype)(cloned_reqs)
+        
+        print("perf wrote:", perf_file)
+
+        # emission_tracker.stop_task()
 
         # put responses from model into a list of length K for each request.
         for x, req in zip(resps, cloned_reqs):
