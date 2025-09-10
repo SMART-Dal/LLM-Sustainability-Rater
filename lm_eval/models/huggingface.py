@@ -38,11 +38,14 @@ from lm_eval.models.utils import (
     pad_and_concat,
     stop_sequences_criteria,
 )
-from codecarbon import EmissionsTracker
+
 from transformers import set_seed
+from lm_eval.utils import initialize_emission_tracker, code_carbon_logger_handler
 
 
 eval_logger = logging.getLogger(__name__)
+
+
 
 
 @register_model("hf-auto", "hf", "huggingface")
@@ -97,7 +100,7 @@ class HFLM(TemplateLM):
         autogptq: Optional[Union[bool, str]] = False,
         gptqmodel: Optional[bool] = False,
         gguf_file: Optional[str] = None,
-        emission_tracker: Optional[EmissionsTracker] = None,
+        codecarbon_results: Optional[dict] = dict(),
         **kwargs,
     ) -> None:
         super().__init__()
@@ -170,60 +173,84 @@ class HFLM(TemplateLM):
             revision = str(revision)  # cast to string if not already one
             # TODO: update this to be less of a hack once subfolder is fixed in HF
             revision = revision + ("/" + subfolder if subfolder is not None else "")
-
-            emission_tracker.start_task("model_configuration")
-            self._get_config(
-                pretrained,
-                revision=revision,
-                trust_remote_code=trust_remote_code,
-                gguf_file=gguf_file,
-            )
-            emission_tracker.stop_task()
+            
+            cc_task_name = "model_configuration"
+            et_mc = initialize_emission_tracker(project_name=cc_task_name, save_to_file=False)
+            code_carbon_logger_handler(cc_task_name, pretrained.split("/")[1])
+            et_mc.start()
+            try:
+            # emission_tracker.start_task(cc_task_name)
+                self._get_config(
+                    pretrained,
+                    revision=revision,
+                    trust_remote_code=trust_remote_code,
+                    gguf_file=gguf_file,
+                )
+            finally:
+                et_mc.stop()
+                codecarbon_results[cc_task_name] = et_mc.final_emissions_data
+            
+            # emission_tracker.stop_task()
+            
             # determine which of 'causal' and 'seq2seq' backends to use for HF models
         self._get_backend(
             config=self.config, backend=backend, trust_remote_code=trust_remote_code
         )
 
-        
-
-        emission_tracker.start_task("tokenizer_initialization")
+        cc_task_name = "tokenizer_initialization"
+        et_ti = initialize_emission_tracker(project_name=cc_task_name, save_to_file=False)
+        code_carbon_logger_handler(cc_task_name, pretrained.split("/")[1])
+        et_ti.start()
+        # emission_tracker.start_task(cc_task_name)
         # load tokenizer so we know tokenizer vocabulary size before loading model and PEFT
-        self._create_tokenizer(
-            pretrained,
-            tokenizer,
-            revision=revision,
-            trust_remote_code=trust_remote_code,
-            use_fast_tokenizer=use_fast_tokenizer,
-            gguf_file=gguf_file,
-            add_bos_token=add_bos_token,
-        )
-        emission_tracker.stop_task()
-
-        emission_tracker.start_task("model_initialization")
-        # if we passed `pretrained` as a string, initialize our model now
-        if isinstance(pretrained, str):
-            self._create_model(
-                pretrained=pretrained,
+        try:
+            self._create_tokenizer(
+                pretrained,
+                tokenizer,
                 revision=revision,
-                dtype=dtype,
                 trust_remote_code=trust_remote_code,
-                parallelize=parallelize,
-                gpus=gpus,
-                max_memory_per_gpu=max_memory_per_gpu,
-                max_cpu_memory=max_cpu_memory,
-                offload_folder=offload_folder,
-                peft=peft,
-                delta=delta,
-                autogptq=autogptq,
-                gptqmodel=gptqmodel,
+                use_fast_tokenizer=use_fast_tokenizer,
                 gguf_file=gguf_file,
-                gptq_enabled=gptq_enabled,
-                quantization_config=getattr(self.config, "quantization_config", None),
-                bnb_config=bnb_config,
-                **kwargs,
+                add_bos_token=add_bos_token,
             )
-            self._model.eval()
-        emission_tracker.stop_task()
+        finally:
+            et_ti.stop()
+            codecarbon_results[cc_task_name] = et_ti.final_emissions_data
+        # emission_tracker.stop_task()
+
+        cc_task_name = "model_initialization"
+        # emission_tracker.start_task(cc_task_name)
+        # if we passed `pretrained` as a string, initialize our model now
+        et_mi = initialize_emission_tracker(project_name=cc_task_name, save_to_file=False)
+        code_carbon_logger_handler(cc_task_name, pretrained.split("/")[1])
+        et_mi.start()
+        try:
+            if isinstance(pretrained, str):
+                self._create_model(
+                    pretrained=pretrained,
+                    revision=revision,
+                    dtype=dtype,
+                    trust_remote_code=trust_remote_code,
+                    parallelize=parallelize,
+                    gpus=gpus,
+                    max_memory_per_gpu=max_memory_per_gpu,
+                    max_cpu_memory=max_cpu_memory,
+                    offload_folder=offload_folder,
+                    peft=peft,
+                    delta=delta,
+                    autogptq=autogptq,
+                    gptqmodel=gptqmodel,
+                    gguf_file=gguf_file,
+                    gptq_enabled=gptq_enabled,
+                    quantization_config=getattr(self.config, "quantization_config", None),
+                    bnb_config=bnb_config,
+                    **kwargs,
+                )
+                self._model.eval()
+        finally:
+            et_mi.stop()
+            codecarbon_results[cc_task_name] = et_mi.final_emissions_data
+        # emission_tracker.stop_task()
 
         # access self._model through self.model property outside this method
         if isinstance(self.model, torch.nn.Module):

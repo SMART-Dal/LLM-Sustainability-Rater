@@ -12,12 +12,13 @@ from dataclasses import asdict, is_dataclass
 from itertools import islice
 from pathlib import Path
 from typing import Any, Callable, Generator, List, Optional, Tuple
+import sys
 
 import numpy as np
 import yaml
 from jinja2 import BaseLoader, Environment, StrictUndefined
 from codecarbon import EmissionsTracker
-
+from lm_eval.configs import CODE_CARBON_LOG_DIR
 
 SPACING = " " * 47
 
@@ -551,13 +552,59 @@ def weighted_f1_score(items):
     fscore = f1_score(golds, preds, average="weighted")
     return fscore
 
+def code_carbon_logger_handler(task_name, model_name):
+    logger = logging.getLogger("codecarbon")
+    while logger.hasHandlers():
+        logger.removeHandler(logger.handlers[0])
+
+    # Define a log formatter
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
+    )
+
+    model_dir = CODE_CARBON_LOG_DIR / model_name
+    model_dir.mkdir(parents=True, exist_ok=True)
+    log_file = model_dir / f"{task_name}.log"
+
+    Path(log_file).write_text("", encoding="utf-8")
+
+    # Create file handler which logs debug messages
+    fh = logging.FileHandler(log_file)
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(formatter)
+    consoleHandler.setLevel(logging.WARNING)
+    logger.addHandler(consoleHandler)
+
+    logger.debug("GO!")
+
+
+
+def initialize_emission_tracker(
+    project_name,
+    measure_power_secs=1,
+    tracking_mode="machine",
+    save_to_file=True,
+    log_level="info",
+):
+    return EmissionsTracker(
+        project_name=project_name,
+        measure_power_secs=measure_power_secs,
+        tracking_mode=tracking_mode,
+        save_to_file=save_to_file,
+        log_level=log_level,
+    )
+
 
 def convert_kwh_to_joules(num: float) -> float:
     return num * (3.6 * 1e6)
 
 
-def accumulate_task_emissions(tracker: EmissionsTracker):
-    single_value_task = tracker._tasks.get("instances_inference")
+def accumulate_task_emissions(codecarbon_results: dict):
+    single_value_task = codecarbon_results["instances_inference"]
 
     single_value_columns = {
         "timestamp": None,
@@ -606,17 +653,17 @@ def accumulate_task_emissions(tracker: EmissionsTracker):
         "energy_consumed": 0,
     }
 
-    for task_name, emission_data in tracker._tasks.items():
+    for task_name, emission_data in codecarbon_results.items():
         for col in multi_value_columns.keys():
-            multi_value_columns[col] += getattr(emission_data.emissions_data, col)
+            multi_value_columns[col] += getattr(emission_data, col)
         for col in task_specific_data_columns:
-            val = getattr(emission_data.emissions_data, col)
+            val = getattr(emission_data, col)
             task_specific_data_values[f"{task_name}_{col}"] = (
                 val if not col.endswith("energy") else round(convert_kwh_to_joules(val), 4)
             )
 
     for key in single_value_columns:
-        single_value_columns[key] = getattr(single_value_task.emissions_data, key)
+        single_value_columns[key] = getattr(single_value_task, key)
 
     return {**multi_value_columns, **single_value_columns, **task_specific_data_values}
 

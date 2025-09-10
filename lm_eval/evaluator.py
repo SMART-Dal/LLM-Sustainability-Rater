@@ -36,9 +36,10 @@ from lm_eval.utils import (
     simple_parse_args_string,
     get_bnb_quantized_bits,
     accumulate_task_emissions,
+    initialize_emission_tracker,
+    code_carbon_logger_handler
 )
 from codecarbon import EmissionsTracker
-import sys
 
 
 if TYPE_CHECKING:
@@ -46,30 +47,6 @@ if TYPE_CHECKING:
     from lm_eval.api.task import Task
 
 eval_logger = logging.getLogger(__name__)
-
-
-def code_carbon_logger_handler():
-    logger = logging.getLogger("codecarbon")
-    while logger.hasHandlers():
-        logger.removeHandler(logger.handlers[0])
-
-    # Define a log formatter
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
-    )
-
-    # Create file handler which logs debug messages
-    fh = logging.FileHandler(f"codecarbon_measurement.log")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    consoleHandler = logging.StreamHandler(sys.stdout)
-    consoleHandler.setFormatter(formatter)
-    consoleHandler.setLevel(logging.WARNING)
-    logger.addHandler(consoleHandler)
-
-    logger.debug("GO!")
 
 
 import os, subprocess, tempfile, signal, atexit, sys
@@ -222,288 +199,268 @@ def simple_evaluate(
     return
         Dictionary of results
     """
-    emission_tracker = EmissionsTracker(
-            measure_power_secs=1,
-            tracking_mode="process",
-            save_to_file=False,
-            # log_level="error"
+    codecarbon_results = {}
+    if verbosity is not None:
+        setup_logging(verbosity=verbosity)
+    start_date = time.time()
+
+    if limit is not None and samples is not None:
+        raise ValueError(
+            "Either 'limit' or 'samples' must be None, but both are not None."
         )
 
-    results = None
-    raised_exception = None
-    try:
-        if verbosity is not None:
-            setup_logging(verbosity=verbosity)
-        start_date = time.time()
-
-        if limit is not None and samples is not None:
-            raise ValueError(
-                "Either 'limit' or 'samples' must be None, but both are not None."
-            )
-
-        if (
-            (isinstance(model_args, str) and "inst" in model_args.lower())
-            or (
-                isinstance(model_args, dict)
-                and any("inst" in str(v).lower() for v in model_args.values())
-            )
-        ) and not apply_chat_template:
-            eval_logger.warning(
-                "Model appears to be an instruct variant but chat template is not applied. Recommend setting `apply_chat_template` (optionally `fewshot_as_multiturn`)."
-            )
-
-        if delete_requests_cache:
-            eval_logger.info("Deleting requests cache...")
-            delete_cache()
-
-        seed_message = []
-        if random_seed is not None:
-            # See https://github.com/EleutherAI/lm-evaluation-harness/pull/1412
-            seed_message.append(f"Setting random seed to {random_seed}")
-            random.seed(random_seed)
-
-        if numpy_random_seed is not None:
-            seed_message.append(f"Setting numpy seed to {numpy_random_seed}")
-            np.random.seed(numpy_random_seed)
-
-        if torch_random_seed is not None:
-            seed_message.append(f"Setting torch manual seed to {torch_random_seed}")
-            torch.manual_seed(torch_random_seed)
-
-        if fewshot_random_seed is not None:
-            seed_message.append(f"Setting fewshot manual seed to {fewshot_random_seed}")
-
-        if seed_message:
-            eval_logger.info(" | ".join(seed_message))
-
-        if tasks is None:
-            tasks = []
-        if len(tasks) == 0:
-            raise ValueError(
-                "No tasks specified, or no tasks found. Please verify the task names."
-            )
-
-        if gen_kwargs is not None:
-            if isinstance(gen_kwargs, str):
-                gen_kwargs = simple_parse_args_string(gen_kwargs)
-            eval_logger.warning(
-                f"generation_kwargs: {gen_kwargs} specified through cli, these settings will update set parameters in yaml tasks. "
-                "Ensure 'do_sample=True' for non-greedy decoding!"
-            )
-            if not gen_kwargs:
-                gen_kwargs = None
-
-        if isinstance(model, str):
-            if model_args is None:
-                eval_logger.warning("model_args not specified. Using defaults.")
-                model_args = ""
-
-            if isinstance(model_args, dict):
-                eval_logger.info(
-                    f"Initializing {model} model, with arguments: {model_args}"
-                )
-                lm = lm_eval.api.registry.get_model(model).create_from_arg_obj(
-                    model_args,
-                    {
-                        "batch_size": batch_size,
-                        "max_batch_size": max_batch_size,
-                        "device": device,
-                    },
-                )
-
-            else:
-                eval_logger.info(
-                    f"Initializing {model} model, with arguments: {simple_parse_args_string(model_args)}"
-                )
-                lm = lm_eval.api.registry.get_model(model).create_from_arg_string(
-                    model_args,
-                    {
-                        "batch_size": batch_size,
-                        "max_batch_size": max_batch_size,
-                        "device": device,
-                        "bnb_config": bnb_config,
-                        "emission_tracker": emission_tracker
-                    },
-                )
-        else:
-            if not isinstance(model, lm_eval.api.model.LM):
-                raise TypeError(
-                    f"The value of `model` passed to simple_evaluate() was of type {type(model)}, but is required to be a subclass of lm_eval.api.model.LM . This may be because you are passing an initialized Hugging Face PreTrainedModel without having wrapped it in `lm_eval.models.huggingface.HFLM(pretrained=my_model)` first."
-                )
-            eval_logger.info("Using pre-initialized model")
-            lm = model
-
-        if use_cache is not None:
-            eval_logger.info(f"Using cache at {use_cache + '_rank' + str(lm.rank) + '.db'}")
-            lm = lm_eval.api.model.CachingLM(
-                lm,
-                use_cache
-                # each rank receives a different cache db.
-                # necessary to avoid multiple writes to cache at once
-                + "_rank" + str(lm.rank) + ".db",
-            )
-
-        if task_manager is None:
-            metadata = (
-                simple_parse_args_string(model_args)
-                if isinstance(model_args, str)
-                else model_args if isinstance(model_args, dict) else {}
-            ) | (metadata or {})
-            task_manager = TaskManager(metadata=metadata)
-
-        task_dict = get_task_dict(
-            tasks,
-            task_manager,
+    if (
+        (isinstance(model_args, str) and "inst" in model_args.lower())
+        or (
+            isinstance(model_args, dict)
+            and any("inst" in str(v).lower() for v in model_args.values())
+        )
+    ) and not apply_chat_template:
+        eval_logger.warning(
+            "Model appears to be an instruct variant but chat template is not applied. Recommend setting `apply_chat_template` (optionally `fewshot_as_multiturn`)."
         )
 
-        # helper function to recursively apply config overrides to leaf subtasks, skipping their constituent groups.
-        # (setting of num_fewshot ; bypassing metric calculation ; setting fewshot seed)
-        def _adjust_config(task_dict):
-            adjusted_task_dict = {}
-            for task_name, task_obj in task_dict.items():
-                if isinstance(task_obj, dict):
-                    adjusted_task_dict = {
-                        **adjusted_task_dict,
-                        **{task_name: _adjust_config(task_obj)},
-                    }
+    if delete_requests_cache:
+        eval_logger.info("Deleting requests cache...")
+        delete_cache()
 
-                else:
-                    if task_obj.get_config("output_type") == "generate_until":
-                        if gen_kwargs is not None:
-                            task_obj.set_config(
-                                key="generation_kwargs", value=gen_kwargs, update=True
-                            )
-                        eval_logger.info(
-                            f"{task_obj.config.task}: Using gen_kwargs: {task_obj.config.generation_kwargs}"
-                        )
+    seed_message = []
+    if random_seed is not None:
+        # See https://github.com/EleutherAI/lm-evaluation-harness/pull/1412
+        seed_message.append(f"Setting random seed to {random_seed}")
+        random.seed(random_seed)
 
-                    if predict_only:
-                        eval_logger.info(
-                            f"Processing {task_name} in output-only mode. Metrics will not be calculated!"
-                        )
-                        # we have to change the class properties post-hoc. This is pretty hacky.
-                        task_obj.override_metric(metric_name="bypass")
+    if numpy_random_seed is not None:
+        seed_message.append(f"Setting numpy seed to {numpy_random_seed}")
+        np.random.seed(numpy_random_seed)
 
-                    # override tasks' fewshot values to the provided num_fewshot arg value
-                    # except if tasks have it set to 0 manually in their configs--then we should never overwrite that
-                    if num_fewshot is not None:
-                        if (default_num_fewshot := task_obj.get_config("num_fewshot")) == 0:
-                            eval_logger.info(
-                                f"num_fewshot has been set to 0 for {task_name} in its config. Manual configuration will be ignored."
-                            )
-                        else:
-                            eval_logger.warning(
-                                f"Overwriting default num_fewshot of {task_name} from {default_num_fewshot} to {num_fewshot}"
-                            )
-                            task_obj.set_config(key="num_fewshot", value=num_fewshot)
-                    else:
-                        # if num_fewshot not provided, and the task does not define a default one, default to 0
-                        if (
-                            default_num_fewshot := task_obj.get_config("num_fewshot")
-                        ) is None:
-                            task_obj.set_config(key="num_fewshot", value=0)
-                    # fewshot_random_seed set for tasks, even with a default num_fewshot (e.g. in the YAML file)
-                    task_obj.set_fewshot_seed(seed=fewshot_random_seed)
+    if torch_random_seed is not None:
+        seed_message.append(f"Setting torch manual seed to {torch_random_seed}")
+        torch.manual_seed(torch_random_seed)
 
-                    adjusted_task_dict[task_name] = task_obj
+    if fewshot_random_seed is not None:
+        seed_message.append(f"Setting fewshot manual seed to {fewshot_random_seed}")
 
-            return adjusted_task_dict
+    if seed_message:
+        eval_logger.info(" | ".join(seed_message))
 
-        task_dict = _adjust_config(task_dict)
-
-        if check_integrity:
-            run_task_tests(task_list=tasks)
-
-        if evaluation_tracker is not None:
-            evaluation_tracker.general_config_tracker.log_experiment_args(
-                model_source=model,
-                model_args=model_args,
-                system_instruction=system_instruction,
-                chat_template=(
-                    lm.chat_template(apply_chat_template) if apply_chat_template else None
-                ),
-                fewshot_as_multiturn=fewshot_as_multiturn,
-            )
-
-        results = evaluate(
-            lm=lm,
-            task_dict=task_dict,
-            limit=limit,
-            samples=samples,
-            cache_requests=cache_requests,
-            rewrite_requests_cache=rewrite_requests_cache,
-            bootstrap_iters=bootstrap_iters,
-            write_out=write_out,
-            log_samples=True if predict_only else log_samples,
-            system_instruction=system_instruction,
-            apply_chat_template=apply_chat_template,
-            fewshot_as_multiturn=fewshot_as_multiturn,
-            verbosity=verbosity,
-            confirm_run_unsafe_code=confirm_run_unsafe_code,
-            emission_tracker=emission_tracker
+    if tasks is None:
+        tasks = []
+    if len(tasks) == 0:
+        raise ValueError(
+            "No tasks specified, or no tasks found. Please verify the task names."
         )
-        if verbosity is not None:
-            setup_logging(verbosity=verbosity)
-        
-        if bnb_config:
-            results["model"] += get_bnb_quantized_bits(bnb_config)
 
-        if lm.rank == 0:
-            if isinstance(model, str):
-                model_name = model
-            elif hasattr(model, "config") and hasattr(model.config, "_name_or_path"):
-                model_name = model.config._name_or_path
-            else:
-                model_name = type(model).__name__
+    if gen_kwargs is not None:
+        if isinstance(gen_kwargs, str):
+            gen_kwargs = simple_parse_args_string(gen_kwargs)
+        eval_logger.warning(
+            f"generation_kwargs: {gen_kwargs} specified through cli, these settings will update set parameters in yaml tasks. "
+            "Ensure 'do_sample=True' for non-greedy decoding!"
+        )
+        if not gen_kwargs:
+            gen_kwargs = None
 
-            # add info about the model and few shot config
-            results["config"] = {
-                "model": model_name,
-                "model_args": model_args,
-            }
-            # add more detailed model info if available
-            if isinstance(lm, lm_eval.models.huggingface.HFLM):
-                results["config"].update(lm.get_model_info())
-            # add info about execution
-            results["config"].update(
+    if isinstance(model, str):
+        if model_args is None:
+            eval_logger.warning("model_args not specified. Using defaults.")
+            model_args = ""
+
+        if isinstance(model_args, dict):
+            eval_logger.info(
+                f"Initializing {model} model, with arguments: {model_args}"
+            )
+            lm = lm_eval.api.registry.get_model(model).create_from_arg_obj(
+                model_args,
                 {
                     "batch_size": batch_size,
-                    "batch_sizes": (
-                        list(lm.batch_sizes.values()) if hasattr(lm, "batch_sizes") else []
-                    ),
+                    "max_batch_size": max_batch_size,
                     "device": device,
-                    "use_cache": use_cache,
-                    "limit": limit,
-                    "bootstrap_iters": bootstrap_iters,
-                    "gen_kwargs": gen_kwargs,
-                    "random_seed": random_seed,
-                    "numpy_seed": numpy_random_seed,
-                    "torch_seed": torch_random_seed,
-                    "fewshot_seed": fewshot_random_seed,
-                }
+                },
             )
-            results["git_hash"] = get_git_commit_hash()
-            results["date"] = start_date
-            add_env_info(results)  # additional environment info to results
-            add_tokenizer_info(results, lm)  # additional info about tokenizer
-            return results
-        else:
-            return None
-    
-    except Exception as e:
-        eval_logger.error(e)
-        raised_exception = e
 
-    finally:
-        if len(emission_tracker._tasks) > 0:
-            emission_tracker.stop()
-        if raised_exception is not None:
-            raise raised_exception
-        if results is None:
-            return None
-        
-        emission_results = accumulate_task_emissions(emission_tracker)
+        else:
+            eval_logger.info(
+                f"Initializing {model} model, with arguments: {simple_parse_args_string(model_args)}"
+            )
+            lm = lm_eval.api.registry.get_model(model).create_from_arg_string(
+                model_args,
+                {
+                    "batch_size": batch_size,
+                    "max_batch_size": max_batch_size,
+                    "device": device,
+                    "bnb_config": bnb_config,
+                    # "emission_tracker": emission_tracker
+                    "codecarbon_results": codecarbon_results
+                },
+            )
+    else:
+        if not isinstance(model, lm_eval.api.model.LM):
+            raise TypeError(
+                f"The value of `model` passed to simple_evaluate() was of type {type(model)}, but is required to be a subclass of lm_eval.api.model.LM . This may be because you are passing an initialized Hugging Face PreTrainedModel without having wrapped it in `lm_eval.models.huggingface.HFLM(pretrained=my_model)` first."
+            )
+        eval_logger.info("Using pre-initialized model")
+        lm = model
+
+    if use_cache is not None:
+        eval_logger.info(f"Using cache at {use_cache + '_rank' + str(lm.rank) + '.db'}")
+        lm = lm_eval.api.model.CachingLM(
+            lm,
+            use_cache
+            # each rank receives a different cache db.
+            # necessary to avoid multiple writes to cache at once
+            + "_rank" + str(lm.rank) + ".db",
+        )
+
+    if task_manager is None:
+        metadata = (
+            simple_parse_args_string(model_args)
+            if isinstance(model_args, str)
+            else model_args if isinstance(model_args, dict) else {}
+        ) | (metadata or {})
+        task_manager = TaskManager(metadata=metadata)
+
+    task_dict = get_task_dict(
+        tasks,
+        task_manager,
+    )
+
+    # helper function to recursively apply config overrides to leaf subtasks, skipping their constituent groups.
+    # (setting of num_fewshot ; bypassing metric calculation ; setting fewshot seed)
+    def _adjust_config(task_dict):
+        adjusted_task_dict = {}
+        for task_name, task_obj in task_dict.items():
+            if isinstance(task_obj, dict):
+                adjusted_task_dict = {
+                    **adjusted_task_dict,
+                    **{task_name: _adjust_config(task_obj)},
+                }
+
+            else:
+                if task_obj.get_config("output_type") == "generate_until":
+                    if gen_kwargs is not None:
+                        task_obj.set_config(
+                            key="generation_kwargs", value=gen_kwargs, update=True
+                        )
+                    eval_logger.info(
+                        f"{task_obj.config.task}: Using gen_kwargs: {task_obj.config.generation_kwargs}"
+                    )
+
+                if predict_only:
+                    eval_logger.info(
+                        f"Processing {task_name} in output-only mode. Metrics will not be calculated!"
+                    )
+                    # we have to change the class properties post-hoc. This is pretty hacky.
+                    task_obj.override_metric(metric_name="bypass")
+
+                # override tasks' fewshot values to the provided num_fewshot arg value
+                # except if tasks have it set to 0 manually in their configs--then we should never overwrite that
+                if num_fewshot is not None:
+                    if (default_num_fewshot := task_obj.get_config("num_fewshot")) == 0:
+                        eval_logger.info(
+                            f"num_fewshot has been set to 0 for {task_name} in its config. Manual configuration will be ignored."
+                        )
+                    else:
+                        eval_logger.warning(
+                            f"Overwriting default num_fewshot of {task_name} from {default_num_fewshot} to {num_fewshot}"
+                        )
+                        task_obj.set_config(key="num_fewshot", value=num_fewshot)
+                else:
+                    # if num_fewshot not provided, and the task does not define a default one, default to 0
+                    if (
+                        default_num_fewshot := task_obj.get_config("num_fewshot")
+                    ) is None:
+                        task_obj.set_config(key="num_fewshot", value=0)
+                # fewshot_random_seed set for tasks, even with a default num_fewshot (e.g. in the YAML file)
+                task_obj.set_fewshot_seed(seed=fewshot_random_seed)
+
+                adjusted_task_dict[task_name] = task_obj
+
+        return adjusted_task_dict
+
+    task_dict = _adjust_config(task_dict)
+
+    if check_integrity:
+        run_task_tests(task_list=tasks)
+
+    if evaluation_tracker is not None:
+        evaluation_tracker.general_config_tracker.log_experiment_args(
+            model_source=model,
+            model_args=model_args,
+            system_instruction=system_instruction,
+            chat_template=(
+                lm.chat_template(apply_chat_template) if apply_chat_template else None
+            ),
+            fewshot_as_multiturn=fewshot_as_multiturn,
+        )
+
+    results = evaluate(
+        lm=lm,
+        task_dict=task_dict,
+        limit=limit,
+        samples=samples,
+        cache_requests=cache_requests,
+        rewrite_requests_cache=rewrite_requests_cache,
+        bootstrap_iters=bootstrap_iters,
+        write_out=write_out,
+        log_samples=True if predict_only else log_samples,
+        system_instruction=system_instruction,
+        apply_chat_template=apply_chat_template,
+        fewshot_as_multiturn=fewshot_as_multiturn,
+        verbosity=verbosity,
+        confirm_run_unsafe_code=confirm_run_unsafe_code,
+        codecarbon_results=codecarbon_results
+    )
+    if verbosity is not None:
+        setup_logging(verbosity=verbosity)
+    
+    if bnb_config:
+        results["model"] += get_bnb_quantized_bits(bnb_config)
+
+    if lm.rank == 0:
+        if isinstance(model, str):
+            model_name = model
+        elif hasattr(model, "config") and hasattr(model.config, "_name_or_path"):
+            model_name = model.config._name_or_path
+        else:
+            model_name = type(model).__name__
+
+        # add info about the model and few shot config
+        results["config"] = {
+            "model": model_name,
+            "model_args": model_args,
+        }
+        # add more detailed model info if available
+        if isinstance(lm, lm_eval.models.huggingface.HFLM):
+            results["config"].update(lm.get_model_info())
+        # add info about execution
+        results["config"].update(
+            {
+                "batch_size": batch_size,
+                "batch_sizes": (
+                    list(lm.batch_sizes.values()) if hasattr(lm, "batch_sizes") else []
+                ),
+                "device": device,
+                "use_cache": use_cache,
+                "limit": limit,
+                "bootstrap_iters": bootstrap_iters,
+                "gen_kwargs": gen_kwargs,
+                "random_seed": random_seed,
+                "numpy_seed": numpy_random_seed,
+                "torch_seed": torch_random_seed,
+                "fewshot_seed": fewshot_random_seed,
+            }
+        )
+        results["git_hash"] = get_git_commit_hash()
+        results["date"] = start_date
+        add_env_info(results)  # additional environment info to results
+        add_tokenizer_info(results, lm)  # additional info about tokenizer
+        emission_results = accumulate_task_emissions(codecarbon_results)
         return {**results, **emission_results}
+    else:
+        return None
+    
+        
 
 
 @positional_deprecated
@@ -522,7 +479,7 @@ def evaluate(
     fewshot_as_multiturn: bool = False,
     verbosity: str = "INFO",
     confirm_run_unsafe_code: bool = False,
-    emission_tracker: EmissionsTracker = None
+    codecarbon_results: Optional[dict] = dict()
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -675,12 +632,23 @@ def evaluate(
             for _ in range(padding_requests[reqtype]):
                 cloned_reqs.extend([req] * req.repeats)
 
-        # emission_tracker.start_task("instances_inference")
+
+        cc_task_name = "instances_inference"
+        et_ii = initialize_emission_tracker(cc_task_name, save_to_file=False)
+        code_carbon_logger_handler(cc_task_name, lm.pretrained.split("/")[1])
+        # emission_tracker.start_task(cc_task_name)
         # run requests through model
-        with perf_energy(interval_ms=1000) as perf_file:
+        # with perf_energy(interval_ms=1000, system_wide=True) as perf_file:
+        # code_carbon_logger_handler()
+        et_ii.start()
+        try:
             resps = getattr(lm, reqtype)(cloned_reqs)
+        finally:
+            et_ii.stop()
+            codecarbon_results[cc_task_name] = et_ii.final_emissions_data
+
         
-        print("perf wrote:", perf_file)
+        # print("perf wrote:", perf_file)
 
         # emission_tracker.stop_task()
 
