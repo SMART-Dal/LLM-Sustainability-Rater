@@ -2,10 +2,10 @@ import re
 import datasets
 import logging
 
-output_logger = logging.getLogger("generation_logger")
+# output_logger = logging.getLogger("generation_logger")
 
 def process_docs(dataset: datasets.Dataset):
-    dataset = dataset.select([i for i in range(1000)])
+    dataset = dataset.select([i for i in range(500)])
     return dataset
 
 def doc_to_text(doc):
@@ -16,7 +16,7 @@ def doc_to_text(doc):
     
 
 def clean_text(text):
-    text.replace('\n', ' ').lower()
+    text = text.replace('\n', ' ').lower()
     text = re.sub(r'\s+', ' ', text)
     text = text.strip()
     return text
@@ -39,7 +39,7 @@ def parse_output(text: str) -> str:
 def build_predictions(resps: list[list[str]], docs: list[dict]) -> list[list[str]]:
     new_res = [parse_output([clean_text(s) for s in inner][0]) for inner in resps]
      
-    for smp in new_res:
-        output_logger.info(smp)
-    output_logger.info("-" * 30)
+    # for smp in new_res:
+    #     output_logger.info(smp)
+    # output_logger.info("-" * 30)
     return new_res
