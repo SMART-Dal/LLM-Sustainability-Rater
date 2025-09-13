@@ -291,7 +291,8 @@ def simple_evaluate(
                     "device": device,
                     "bnb_config": bnb_config,
                     # "emission_tracker": emission_tracker
-                    "codecarbon_results": codecarbon_results
+                    "codecarbon_results": codecarbon_results,
+                    "benchmark": tasks[0]
                 },
             )
     else:
@@ -635,7 +636,7 @@ def evaluate(
 
         cc_task_name = "instances_inference"
         et_ii = initialize_emission_tracker(cc_task_name, tracking_mode="process", save_to_file=False)
-        code_carbon_logger_handler(cc_task_name, lm.pretrained.split("/")[1])
+        code_carbon_logger_handler(list(task_dict.keys())[0], cc_task_name, lm.pretrained.split("/")[1])
         # emission_tracker.start_task(cc_task_name)
         # run requests through model
         # with perf_energy(interval_ms=1000, system_wide=True) as perf_file:

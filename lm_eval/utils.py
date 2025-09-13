@@ -552,7 +552,7 @@ def weighted_f1_score(items):
     fscore = f1_score(golds, preds, average="weighted")
     return fscore
 
-def code_carbon_logger_handler(task_name, model_name):
+def code_carbon_logger_handler(benchmark, task_name, model_name):
     logger = logging.getLogger("codecarbon")
     while logger.hasHandlers():
         logger.removeHandler(logger.handlers[0])
@@ -562,7 +562,7 @@ def code_carbon_logger_handler(task_name, model_name):
         "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
     )
 
-    model_dir = CODE_CARBON_LOG_DIR / model_name
+    model_dir = CODE_CARBON_LOG_DIR / benchmark / model_name
     model_dir.mkdir(parents=True, exist_ok=True)
     log_file = model_dir / f"{task_name}.log"
 

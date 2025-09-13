@@ -101,6 +101,7 @@ class HFLM(TemplateLM):
         gptqmodel: Optional[bool] = False,
         gguf_file: Optional[str] = None,
         codecarbon_results: Optional[dict] = dict(),
+        benchmark: Optional[str] = "benchmark",
         **kwargs,
     ) -> None:
         super().__init__()
@@ -176,7 +177,7 @@ class HFLM(TemplateLM):
             
             cc_task_name = "model_configuration"
             et_mc = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
-            code_carbon_logger_handler(cc_task_name, pretrained.split("/")[1])
+            code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
             et_mc.start()
             try:
             # emission_tracker.start_task(cc_task_name)
@@ -199,7 +200,7 @@ class HFLM(TemplateLM):
 
         cc_task_name = "tokenizer_initialization"
         et_ti = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
-        code_carbon_logger_handler(cc_task_name, pretrained.split("/")[1])
+        code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
         et_ti.start()
         # emission_tracker.start_task(cc_task_name)
         # load tokenizer so we know tokenizer vocabulary size before loading model and PEFT
@@ -222,7 +223,7 @@ class HFLM(TemplateLM):
         # emission_tracker.start_task(cc_task_name)
         # if we passed `pretrained` as a string, initialize our model now
         et_mi = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
-        code_carbon_logger_handler(cc_task_name, pretrained.split("/")[1])
+        code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
         et_mi.start()
         try:
             if isinstance(pretrained, str):
