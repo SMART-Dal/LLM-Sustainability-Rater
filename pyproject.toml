@@ -42,7 +42,10 @@ dependencies = [
     "codecarbon",
     "optimum",
     "bitsandbytes",
-    "python-dotenv"
+    "python-dotenv",
+    "matplotlib",
+    "openpyxl",
+    "cvxpy"
 ]
 
 [tool.setuptools.packages.find]

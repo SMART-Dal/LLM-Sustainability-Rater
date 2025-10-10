@@ -10,12 +10,15 @@ We extended that repository with the aim of capturing energy consumption of lang
 ```
 git clone https://github.com/SMART-Dal/LLM-Sustainability-Rater.git
 cd LLM-Sustainability-Rater
+python3 -m venv venv
+source venv/bin/activate
 pip install -e .
-cd lm_eval
 ```
 
-## Usage
-- First you need to configure `run_config.yaml` file to specify the models and benchmarks.
+## Usage Steps
+- First you need to create `.env` file with your Huggingface API token in this format `HF_TOKEN=YOUR_TOKEN`.
+- `cd lm_eval`
+- Then you need to configure `run_config.yaml` file to specify the models and benchmarks.
     - `model`: This tag should be set to `hf` because our main goal is to run base models without any optimizations
     - `tasks`: You can extract the list of tasks with `lm-eval --tasks list` command.
     - `model_args`: Any argument that `AutoModel.from_pretrained` of huggingface takes.
@@ -23,3 +26,4 @@ cd lm_eval
     - `experiments_run`: Simple tag to determine the purpose of your project. It will be stored in the final results file so you can extract and filter your results.
 - Then you can run the command the `python main_run.py`. Each model specified in the yaml file will run sequentially on one task a time.
 - The final results will be stored in `results/results.jsonl`. Also, if you need to take a look at each model specific energy log by codecarbon, you can view `codecarbon_log/{task_name}/{model_name}/{model_task}.log`
+- After generating results, you can rate your LLMs on a benchmark by running `python rating_llms/{approach}.py --task_name {task_name} --file_name {file_name}` where `task_name` is the tasks you specified in `run_config.yaml` and `file_name` will point to default generated `results.jsonl` file unless you specify. The results of ranking will be stored in `rating_llm/data` 

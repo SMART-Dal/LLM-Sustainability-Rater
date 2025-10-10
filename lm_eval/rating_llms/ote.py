@@ -46,16 +46,18 @@ def create_all_possible_derivatives(ene_eff, acc):
 
 
 def remove_derivative_outliers(all_possible_derivates):
+    try:
+        deriv = np.array(all_possible_derivates)
+        mcd = MinCovDet().fit(deriv.reshape(-1, 1))
+        d2 = mcd.mahalanobis(deriv.reshape(-1, 1))
 
-    deriv = np.array(all_possible_derivates)
-    mcd = MinCovDet().fit(deriv.reshape(-1, 1))
-    d2 = mcd.mahalanobis(deriv.reshape(-1, 1))
+        thr = chi2.ppf(0.95, df=1)
 
-    thr = chi2.ppf(0.95, df=1)
-
-    deriv_inliers_all = deriv[d2 <= thr]
-    deriv_outliers_all = deriv[d2 > thr]
-    return deriv_inliers_all
+        deriv_inliers_all = deriv[d2 <= thr]
+        deriv_outliers_all = deriv[d2 > thr]
+        return deriv_inliers_all
+    except:
+        return None
 
 
 def approximate_regression_function(df, X_clean, deriv_inliers_all):
@@ -76,8 +78,8 @@ def approximate_regression_function(df, X_clean, deriv_inliers_all):
         for k in range(1, d + 1):
             D[j, k] = k * zj ** (k - 1)
 
-    constraints = [D @ b <= np.percentile(deriv_inliers_all, 75), cp.sum(b) >= 1e-2]
-    # the second constraint is for ensuring that plot lies above 0
+    cons = np.percentile(deriv_inliers_all, 75) if deriv_inliers_all is not None else 0
+    constraints = [D @ b <= cons, cp.sum(b) >= 1e-2]    # the second constraint is for ensuring that plot lies above 0
 
     prob = cp.Problem(objective, constraints)
     prob.solve()
