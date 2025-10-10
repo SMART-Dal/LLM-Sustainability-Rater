@@ -31,6 +31,7 @@ output/
 data/
 temp/
 test_logs/
+llm_labeling/data
 
 # Caching
 lm_eval/caching/.cache
@@ -39,6 +40,9 @@ lm_cache/
 # Logging
 *.log
 logs/
+
+# RQs Data
+*.pdf
 
 # wandb experiment tracking
 wandb/

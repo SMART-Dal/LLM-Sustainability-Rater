@@ -42,8 +42,6 @@ dependencies = [
     "codecarbon",
     "optimum",
     "bitsandbytes",
-    "gptqmodel",
-    "autoawq",
     "python-dotenv"
 ]
 
