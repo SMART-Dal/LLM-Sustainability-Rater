@@ -41,8 +41,8 @@ lm_cache/
 *.log
 logs/
 
-# RQs Data
-*.pdf
+# # RQs Data
+# *.pdf
 
 # wandb experiment tracking
 wandb/
