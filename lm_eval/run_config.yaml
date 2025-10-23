@@ -1,7 +1,7 @@
 model: hf
 tasks:
-  # - livecodebench
-  - code2text_python
+  - livecodebench
+  # - code2text_python
 model_args:
   # - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
   # - "pretrained=bigcode/starcoderbase-1b"
@@ -21,11 +21,11 @@ model_args:
   # - "pretrained=stabilityai/stable-code-3b"
   # - "pretrained=codellama/CodeLlama-7b-Python-hf"
   # - "pretrained=ByteDance-Seed/Seed-Coder-8B-Instruct"
-  # - "pretrained=Qwen/CodeQwen1.5-7B-Chat"
+  - "pretrained=Qwen/CodeQwen1.5-7B-Chat"
   # - "pretrained=ise-uiuc/Magicoder-S-DS-6.7B"
   # - "pretrained=ibm-granite/granite-8b-code-base-4k"
   # - "pretrained=Salesforce/codegen2-7B_P"
-  - "pretrained=Salesforce/codegen-2B-mono"
+  # - "pretrained=Salesforce/codegen-2B-mono"
 
   # - "pretrained=Qwen/Qwen2.5-Coder-7B-Instruct-AWQ"
   # - "pretrained=Qwen/Qwen2.5-Coder-3B-Instruct-AWQ"
@@ -56,4 +56,4 @@ bnb_config:
   # - null
   # - null
 
-experiments_run: "main"
+experiments_run: "CodeQwen1.5-7B-Chat_max_249W"
