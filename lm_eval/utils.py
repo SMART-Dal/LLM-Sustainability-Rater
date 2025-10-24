@@ -18,7 +18,7 @@ import numpy as np
 import yaml
 from jinja2 import BaseLoader, Environment, StrictUndefined
 from codecarbon import EmissionsTracker
-from lm_eval.configs import CODE_CARBON_LOG_DIR
+from lm_eval.configs import CODE_CARBON_LOG_DIR, YAML_RUN_CONFIG
 
 SPACING = " " * 47
 
@@ -553,6 +553,8 @@ def weighted_f1_score(items):
     return fscore
 
 def code_carbon_logger_handler(benchmark, task_name, model_name):
+    with open(YAML_RUN_CONFIG, "r") as f:
+        experiment_tag = yaml.safe_load(f)["experiments_run"]
     logger = logging.getLogger("codecarbon")
     while logger.hasHandlers():
         logger.removeHandler(logger.handlers[0])
@@ -562,7 +564,7 @@ def code_carbon_logger_handler(benchmark, task_name, model_name):
         "%(asctime)s - %(name)-12s: %(levelname)-8s %(message)s"
     )
 
-    model_dir = CODE_CARBON_LOG_DIR / benchmark / model_name
+    model_dir = CODE_CARBON_LOG_DIR / benchmark / f"{model_name}_{experiment_tag}"
     model_dir.mkdir(parents=True, exist_ok=True)
     log_file = model_dir / f"{task_name}.log"
 
