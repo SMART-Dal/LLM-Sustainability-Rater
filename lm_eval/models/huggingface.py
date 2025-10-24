@@ -1402,6 +1402,7 @@ class HFLM(TemplateLM):
         )
         chunks = re_ords.get_batched(n=batch_size, batch_fn=batch_fn)
         eos = self.tok_decode(self.eot_token_id, skip_special_tokens=False)
+        generated_tokens_length = []
 
         for chunk in chunks:
             contexts, all_gen_kwargs = zip(*chunk)
@@ -1462,6 +1463,7 @@ class HFLM(TemplateLM):
                     cont_toks = cont_toks[context_enc.shape[1] :]
 
                 s = self.tok_decode(cont_toks)
+                generated_tokens_length.append(len(cont_toks))
                 # print(len(cont_toks))
                 # print("--------------------")
                 # use secondary stop seqs to cut off should-have-been-stopped content post-hoc
@@ -1479,6 +1481,7 @@ class HFLM(TemplateLM):
         res = re_ords.get_original(res)
 
         pbar.close()
+        self.sum_generated_tokens = sum(generated_tokens_length)
 
         return res
 

@@ -719,6 +719,7 @@ def clean_output_data(data: dict):
         "model": data["model"],
         "experiments_run": data["experiments_run"],
         **cleaned_data,
+        "generated_tokens": data["generated_tokens"],
         **{k: round(convert_kwh_to_joules(data[k]), 4) for k in energy_keys},
         **{k: v for k, v in data.items() if k in remaining_keys},
         **{k: v for k, v in data.items() if k.endswith(task_specific_columns)} 
