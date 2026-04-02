@@ -837,7 +837,6 @@ def evaluate(
         return {
             **results_dict,
             "model": lm.pretrained,
-            "generated_tokens": lm.sum_generated_tokens
         }
 
     else:
