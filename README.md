@@ -49,8 +49,8 @@ high-level map of the most relevant parts of the repo
   - [results/](lm_eval/results/) — saved results and logs.
   - [run_config.yaml](lm_eval/run_config.yaml) — example run configuration.
   - [tasks/](lm_eval/tasks/) — benchmark/task definitions:
-    - Code tasks: [code_x_glue](lm_eval/tasks/code_x_glue/)
-    - Live coding benchmarks: [LiveCodeBench](lm_eval/tasks/LiveCodeBench/)
+    - CodeXGLUE (Code summarization): [code_x_glue](lm_eval/tasks/code_x_glue/)
+    - LiveCodeBench (Code Generation): [LiveCodeBench](lm_eval/tasks/LiveCodeBench/)
  
 
 ## Install
