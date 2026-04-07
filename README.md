@@ -2,6 +2,9 @@
 
 
 ## Overview
+**[Pre-print: https://arxiv.org/abs/2511.07698](https://arxiv.org/abs/2511.07698)**
+
+
 This repository contains the replication package for our study titled, BRACE. We aim to benchmark energy consumption and functional correctness of code language models on software engineering related tasks. Specifcally, We experimented with 22 huggingface models on two SE benchmarks, [LiveCodeBench](https://livecodebench.github.io/) and [CodeXGLUE-CodeSummarization](https://github.com/microsoft/CodeXGLUE).
 
 <img src="./brace.jpg" alt="Description" style="width:35%; height:auto; display:block; margin:auto;">
