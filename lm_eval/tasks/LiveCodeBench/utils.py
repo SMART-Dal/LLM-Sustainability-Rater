@@ -54,7 +54,7 @@ def process_docs(dataset: datasets.Dataset):
     for tt in test_type:
         questions_buckets[tt] = {difficulty: [] for difficulty in difficulties}
     start_range = 100
-    final_desired_values = 150
+    final_desired_values = 6
     desired_for_each = final_desired_values // (len(difficulties) * len(test_type))
 
     counter = 0
