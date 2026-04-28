@@ -10,9 +10,9 @@ import matplotlib.patheffects as pe
 from pathlib import Path
 
 
-def create_folder(method_name, task_name):
+def create_folder(method_name, file_name, task_name, w_a, w_e):
     curr_dir = Path(__file__).parent
-    data_dir = curr_dir / "data" / f"{method_name}_{task_name}"
+    data_dir = curr_dir / "data" / f"{method_name}_{file_name}_{task_name}_wa_{round(w_a, 2)}_we_{round(w_e, 2)}"
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir
 
@@ -30,6 +30,16 @@ def norm_min_max(df: pd.DataFrame, col: str):
     return (values - values.min()) / (values.max() - values.min())
 
 
+def model_id_from_name(model_names: list[str]):
+    m2id = {}  # keys: model name, values: id
+    counter = 1
+    for model_name in model_names:
+        if model_name not in m2id:
+            m2id[model_name] = counter
+            counter += 1
+    return m2id
+
+
 def load_task_and_preprocess(results_file, task_name):
 
     with open(results_file, "r") as f:
@@ -45,6 +55,8 @@ def load_task_and_preprocess(results_file, task_name):
         "code2text_python": "smoothed_bleu_4,create_output",
     }
     df = df[df["task_name"] == task_name]
+    m2id = model_id_from_name(df["model"].tolist())
+    df["model_id"] = df["model"].apply(lambda x: m2id[x])
     df["params"] = df["model"].apply(
         lambda x: re.findall(r"(\d+(?:\.\d+)?[bBmM])", x.upper())[0]
     )
@@ -56,6 +68,7 @@ def load_task_and_preprocess(results_file, task_name):
     df = df[
         [
             "model",
+            "model_id",
             "params",
             "task_name",
             "acc_values",
@@ -148,7 +161,7 @@ def gradient_labeling(classes, df, filename, curve_plot=None, plot_title=None):
                 path_effects=[pe.withStroke(linewidth=2.2, foreground="white")],
             )
 
-    annotate_params(ax, df["ene_eff"], df["perf"], [str(i + 1) for i in range(len(df))])
+    annotate_params(ax, df["ene_eff"], df["perf"], df["model_id"])
 
     if plot_title is not None:
         fig.suptitle(plot_title, fontsize=16, y=0.98)
