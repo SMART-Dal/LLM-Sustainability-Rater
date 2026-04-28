@@ -808,6 +808,8 @@ def evaluate(
                 higher_is_better[group] = _higher_is_better
 
         results_dict = {
+            "input_tokens": getattr(lm, "total_input_tokens", 0),
+            "output_tokens": getattr(lm, "total_output_tokens", 0),
             "results": dict(results_agg.items()),
             **(
                 {"groups": dict(group_agg.items())}

@@ -279,6 +279,8 @@ class HFLM(TemplateLM):
         self.batch_schedule = 1
         self.batch_sizes = {}
         self.max_batch_size = max_batch_size
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
         self.softmax_dtype = (
             get_dtype(softmax_dtype) if softmax_dtype is not None else None
         )
@@ -1441,6 +1443,8 @@ class HFLM(TemplateLM):
             )
             context_enc = context_enc.to(self.device)
             attn_masks = attn_masks.to(self.device)
+            
+            self.total_input_tokens += attn_masks.sum().item()
 
             # print(context_enc.shape[1])
             # print("+++++++++++++++++++++++++++++")
@@ -1460,6 +1464,8 @@ class HFLM(TemplateLM):
                 # discard context + left-padding toks if using causal decoder-only LM
                 if self.backend == "causal":
                     cont_toks = cont_toks[context_enc.shape[1] :]
+
+                self.total_output_tokens += len(cont_toks)
 
                 s = self.tok_decode(cont_toks)
                 # print(len(cont_toks))

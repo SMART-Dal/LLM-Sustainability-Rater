@@ -678,6 +678,8 @@ def clean_output_data(data: dict):
     cleaned_data = {"task_name": task_name, "acc_values": new_acc_values}
     energy_keys = ["cpu_energy", "gpu_energy", "energy_consumed", "ram_energy"]
     remaining_keys = [
+        "input_tokens",
+        "output_tokens",
         "timestamp",
         "project_name",
         "run_id",
