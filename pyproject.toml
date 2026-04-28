@@ -39,7 +39,7 @@ dependencies = [
     "dill",
     "word2number",
     "more_itertools",
-    "codecarbon",
+    "codegreen",
     "optimum",
     "bitsandbytes",
     "python-dotenv",
