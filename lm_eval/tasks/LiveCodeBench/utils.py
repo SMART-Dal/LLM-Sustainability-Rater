@@ -54,7 +54,7 @@ def process_docs(dataset: datasets.Dataset):
     for tt in test_type:
         questions_buckets[tt] = {difficulty: [] for difficulty in difficulties}
     start_range = 100
-    final_desired_values = 6
+    final_desired_values = 12
     desired_for_each = final_desired_values // (len(difficulties) * len(test_type))
 
     counter = 0
@@ -525,9 +525,9 @@ def process_results(doc: dict, results: List[str]) -> Dict[str, float]:
     if python_starter != -1:
         end_tag = results[0].find("```", python_starter + 9)  # 9 is "```python" length
         if end_tag != -1:
-            generated_code = results[0][python_starter+9:end_tag]
+            generated_code = results[0][python_starter + 9 : end_tag]
         else:
-            generated_code = results[0][python_starter+9:]
+            generated_code = results[0][python_starter + 9 :]
     else:  # if it followed our instruction, we will capture the ending backticks
         found_index = results[0].find("```")
         generated_code = results[0][:found_index] if found_index != -1 else results[0]

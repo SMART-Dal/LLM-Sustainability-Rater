@@ -17,8 +17,10 @@ import sys
 import numpy as np
 import yaml
 from jinja2 import BaseLoader, Environment, StrictUndefined
-from codecarbon import EmissionsTracker
-from lm_eval.configs import CODE_CARBON_LOG_DIR
+from lm_eval.configs import CODE_CARBON_LOG_DIR, USE_CODEGREEN, CODEGREEN_LOG_DIR
+
+if not USE_CODEGREEN:
+    from codecarbon import EmissionsTracker
 
 SPACING = " " * 47
 
@@ -552,6 +554,7 @@ def weighted_f1_score(items):
     fscore = f1_score(golds, preds, average="weighted")
     return fscore
 
+
 def code_carbon_logger_handler(benchmark, task_name, model_name):
     logger = logging.getLogger("codecarbon")
     while logger.hasHandlers():
@@ -582,7 +585,6 @@ def code_carbon_logger_handler(benchmark, task_name, model_name):
     logger.debug("GO!")
 
 
-
 def initialize_emission_tracker(
     project_name,
     measure_power_secs=1,
@@ -603,8 +605,8 @@ def convert_kwh_to_joules(num: float) -> float:
     return num * (3.6 * 1e6)
 
 
-def accumulate_task_emissions(codecarbon_results: dict):
-    single_value_task = codecarbon_results["instances_inference"]
+def accumulate_task_emissions(energy_results: dict):
+    single_value_task = energy_results["instances_inference"]
 
     single_value_columns = {
         "timestamp": None,
@@ -653,19 +655,70 @@ def accumulate_task_emissions(codecarbon_results: dict):
         "energy_consumed": 0,
     }
 
-    for task_name, emission_data in codecarbon_results.items():
+    for task_name, emission_data in energy_results.items():
         for col in multi_value_columns.keys():
             multi_value_columns[col] += getattr(emission_data, col)
         for col in task_specific_data_columns:
             val = getattr(emission_data, col)
             task_specific_data_values[f"{task_name}_{col}"] = (
-                val if not col.endswith("energy") else round(convert_kwh_to_joules(val), 4)
+                val
+                if not col.endswith("energy")
+                else round(convert_kwh_to_joules(val), 4)
             )
 
     for key in single_value_columns:
         single_value_columns[key] = getattr(single_value_task, key)
 
     return {**multi_value_columns, **single_value_columns, **task_specific_data_values}
+
+
+def accumulate_codegreen_emissions(codegreen_report: dict):
+    """Extract energy totals and per-task data from a codegreen report dict
+    for writing into results.jsonl.
+
+    Domain mapping:
+        package-* / core  →  cpu_energy
+        gpu*              →  gpu_energy
+        dram              →  ram_energy
+    """
+    totals = codegreen_report.get("totals", {})
+    tasks = codegreen_report.get("tasks", [])
+
+    cpu_energy = 0.0
+    gpu_energy = 0.0
+    ram_energy = 0.0
+    total_duration = 0.0
+
+    task_specific = {}
+    for task in tasks:
+        name = task["name"]
+        # per-task fields for results.jsonl
+        for key in ["name", "energy_j", "avg_power_w", "duration_s"]:
+            task_specific[f"{name}_{key}"] = task[key]
+            if key == "duration_s":
+                total_duration += task[key]
+
+        # accumulate domain energies
+        domains = task.get("domains", {})
+        for domain_name, energy_val in domains.items():
+            if domain_name.startswith("package") or domain_name == "core":
+                cpu_energy += energy_val
+                task_specific[f"{name}_cpu_energy_j"] = energy_val
+            elif domain_name.startswith("gpu"):
+                gpu_energy += energy_val
+                task_specific[f"{name}_gpu_energy_j"] = energy_val
+            elif domain_name == "dram":
+                ram_energy += energy_val
+                task_specific[f"{name}_ram_energy_j"] = energy_val
+
+    return {
+        "cpu_energy": round(cpu_energy, 4),
+        "gpu_energy": round(gpu_energy, 4),
+        "ram_energy": round(ram_energy, 4),
+        "energy_consumed": round(totals.get("energy_j", 0.0), 4),
+        "duration": round(total_duration, 4),
+        **task_specific,
+    }
 
 
 def clean_output_data(data: dict):
@@ -677,54 +730,79 @@ def clean_output_data(data: dict):
     new_acc_values = {k.replace(",none", ""): v for k, v in acc_values.items()}
     cleaned_data = {"task_name": task_name, "acc_values": new_acc_values}
     energy_keys = ["cpu_energy", "gpu_energy", "energy_consumed", "ram_energy"]
-    remaining_keys = [
-        "input_tokens",
-        "output_tokens",
-        "timestamp",
-        "project_name",
-        "run_id",
-        "experiment_id",
-        "duration",
-        "emissions",
-        "emissions_rate",
-        "country_name",
-        "country_iso_code",
-        "region",
-        "on_cloud",
-        "cloud_provider",
-        "cloud_region",
-        "os",
-        "python_version",
-        "codecarbon_version",
-        "gpu_count",
-        "gpu_model",
-        "cpu_count",
-        "cpu_model",
-        "longitude",
-        "latitude",
-        "ram_total_size",
-        "tracking_mode",
-        "pue",
-    ]
 
-    task_specific_columns = (
-        "_cpu_power",
-        "_gpu_power",
-        "_ram_power",
-        "_duration",
-        "_cpu_energy",
-        "_gpu_energy",
-        "_ram_energy",
-    )
+    if USE_CODEGREEN:
+        # CodeGreen: energy values are already in Joules, no conversion needed
+        codegreen_task_specific_columns = (
+            "_name",
+            "_energy_j",
+            "_avg_power_w",
+            "_duration_s",
+        )
+        cleaned_data = {
+            "model": data["model"],
+            "experiments_run": data["experiments_run"],
+            **cleaned_data,
+            **{k: data[k] for k in energy_keys if k in data},
+            "duration": data.get("duration", 0),
+            "input_tokens": data.get("input_tokens", 0),
+            "output_tokens": data.get("output_tokens", 0),
+            **{
+                k: v
+                for k, v in data.items()
+                if k.endswith(codegreen_task_specific_columns)
+            },
+        }
+    else:
+        # CodeCarbon: energy values are in kWh, convert to Joules
+        remaining_keys = [
+            "input_tokens",
+            "output_tokens",
+            "timestamp",
+            "project_name",
+            "run_id",
+            "experiment_id",
+            "duration",
+            "emissions",
+            "emissions_rate",
+            "country_name",
+            "country_iso_code",
+            "region",
+            "on_cloud",
+            "cloud_provider",
+            "cloud_region",
+            "os",
+            "python_version",
+            "codecarbon_version",
+            "gpu_count",
+            "gpu_model",
+            "cpu_count",
+            "cpu_model",
+            "longitude",
+            "latitude",
+            "ram_total_size",
+            "tracking_mode",
+            "pue",
+        ]
 
-    cleaned_data = {
-        "model": data["model"],
-        "experiments_run": data["experiments_run"],
-        **cleaned_data,
-        **{k: round(convert_kwh_to_joules(data[k]), 4) for k in energy_keys},
-        **{k: v for k, v in data.items() if k in remaining_keys},
-        **{k: v for k, v in data.items() if k.endswith(task_specific_columns)} 
-    }
+        task_specific_columns = (
+            "_cpu_power",
+            "_gpu_power",
+            "_ram_power",
+            "_duration",
+            "_cpu_energy",
+            "_gpu_energy",
+            "_ram_energy",
+        )
+
+        cleaned_data = {
+            "model": data["model"],
+            "experiments_run": data["experiments_run"],
+            **cleaned_data,
+            **{k: round(convert_kwh_to_joules(data[k]), 4) for k in energy_keys},
+            **{k: v for k, v in data.items() if k in remaining_keys},
+            **{k: v for k, v in data.items() if k.endswith(task_specific_columns)},
+        }
     return cleaned_data
 
 

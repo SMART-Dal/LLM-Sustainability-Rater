@@ -36,10 +36,16 @@ from lm_eval.utils import (
     simple_parse_args_string,
     get_bnb_quantized_bits,
     accumulate_task_emissions,
+    accumulate_codegreen_emissions,
     initialize_emission_tracker,
     code_carbon_logger_handler
 )
-from codecarbon import EmissionsTracker
+from lm_eval.configs import USE_CODEGREEN, CODEGREEN_LOG_DIR
+
+if USE_CODEGREEN:
+    import codegreen
+else:
+    from codecarbon import EmissionsTracker
 
 
 if TYPE_CHECKING:
@@ -199,7 +205,7 @@ def simple_evaluate(
     return
         Dictionary of results
     """
-    codecarbon_results = {}
+    energy_results = {}
     if verbosity is not None:
         setup_logging(verbosity=verbosity)
     start_date = time.time()
@@ -283,6 +289,22 @@ def simple_evaluate(
             eval_logger.info(
                 f"Initializing {model} model, with arguments: {simple_parse_args_string(model_args)}"
             )
+
+            # --- CodeGreen session: create once, pass everywhere ---
+            if USE_CODEGREEN:
+                parsed_args = simple_parse_args_string(model_args)
+                model_short_name = parsed_args.get("pretrained", "unknown").split("/")[-1]
+                benchmark_name = tasks[0] if isinstance(tasks[0], str) else list(tasks[0].keys())[0]
+                cg_output_dir = CODEGREEN_LOG_DIR / benchmark_name / model_short_name
+                cg_output_dir.mkdir(parents=True, exist_ok=True)
+                cg_output_path = str(cg_output_dir / "codegreen.json")
+                cg_session = codegreen.Session(
+                    "pipeline",
+                    record_time_series=True,
+                    output_file=cg_output_path,
+                ).start()
+                energy_results["_codegreen_session"] = cg_session
+
             lm = lm_eval.api.registry.get_model(model).create_from_arg_string(
                 model_args,
                 {
@@ -290,8 +312,7 @@ def simple_evaluate(
                     "max_batch_size": max_batch_size,
                     "device": device,
                     "bnb_config": bnb_config,
-                    # "emission_tracker": emission_tracker
-                    "codecarbon_results": codecarbon_results,
+                    "energy_results": energy_results,
                     "benchmark": tasks[0]
                 },
             )
@@ -410,7 +431,7 @@ def simple_evaluate(
         fewshot_as_multiturn=fewshot_as_multiturn,
         verbosity=verbosity,
         confirm_run_unsafe_code=confirm_run_unsafe_code,
-        codecarbon_results=codecarbon_results
+        energy_results=energy_results
     )
     if verbosity is not None:
         setup_logging(verbosity=verbosity)
@@ -456,7 +477,15 @@ def simple_evaluate(
         results["date"] = start_date
         add_env_info(results)  # additional environment info to results
         add_tokenizer_info(results, lm)  # additional info about tokenizer
-        emission_results = accumulate_task_emissions(codecarbon_results)
+        if USE_CODEGREEN:
+            cg_session = energy_results.get("_codegreen_session")
+            if cg_session is not None:
+                cg_report = cg_session.stop()
+                emission_results = accumulate_codegreen_emissions(cg_report)
+            else:
+                emission_results = {}
+        else:
+            emission_results = accumulate_task_emissions(energy_results)
         return {**results, **emission_results}
     else:
         return None
@@ -480,7 +509,7 @@ def evaluate(
     fewshot_as_multiturn: bool = False,
     verbosity: str = "INFO",
     confirm_run_unsafe_code: bool = False,
-    codecarbon_results: Optional[dict] = dict()
+    energy_results: Optional[dict] = dict()
 ):
     """Instantiate and evaluate a model on a list of tasks.
 
@@ -635,19 +664,33 @@ def evaluate(
 
 
         cc_task_name = "instances_inference"
-        et_ii = initialize_emission_tracker(cc_task_name, tracking_mode="process", save_to_file=False)
-        code_carbon_logger_handler(list(task_dict.keys())[0], cc_task_name, lm.pretrained.split("/")[1])
-        # emission_tracker.start_task(cc_task_name)
-        # run requests through model
-        # with perf_energy(interval_ms=1000, system_wide=True) as perf_file:
-        # code_carbon_logger_handler()
-        et_ii.start()
-        try:
-            resps = getattr(lm, reqtype)(cloned_reqs)
-        finally:
-            et_ii.stop()
-            codecarbon_results[cc_task_name] = et_ii.final_emissions_data
+        import time
 
+        if USE_CODEGREEN:
+            cg_session = energy_results.get("_codegreen_session")
+            if cg_session is not None:
+                cg_session.start_task(cc_task_name)
+            try:
+                tmp_start = time.time()
+                resps = getattr(lm, reqtype)(cloned_reqs)
+                tmp_end = time.time()
+            finally:
+                if cg_session is not None:
+                    cg_session.stop_task(cc_task_name)
+        else:
+            et_ii = initialize_emission_tracker(cc_task_name, tracking_mode="process", save_to_file=False)
+            code_carbon_logger_handler(list(task_dict.keys())[0], cc_task_name, lm.pretrained.split("/")[1])
+            et_ii.start()
+            try:
+                tmp_start = time.time()
+                resps = getattr(lm, reqtype)(cloned_reqs)
+                tmp_end = time.time()
+            finally:
+                et_ii.stop()
+                energy_results[cc_task_name] = et_ii.final_emissions_data
+        
+        print("inference time:", tmp_end - tmp_start)
+        
         
         # print("perf wrote:", perf_file)
 

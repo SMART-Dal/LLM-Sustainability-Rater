@@ -40,7 +40,10 @@ from lm_eval.models.utils import (
 )
 
 from transformers import set_seed
-from lm_eval.utils import initialize_emission_tracker, code_carbon_logger_handler
+from lm_eval.configs import USE_CODEGREEN
+
+if not USE_CODEGREEN:
+    from lm_eval.utils import initialize_emission_tracker, code_carbon_logger_handler
 
 
 eval_logger = logging.getLogger(__name__)
@@ -100,7 +103,7 @@ class HFLM(TemplateLM):
         autogptq: Optional[Union[bool, str]] = False,
         gptqmodel: Optional[bool] = False,
         gguf_file: Optional[str] = None,
-        codecarbon_results: Optional[dict] = dict(),
+        energy_results: Optional[dict] = dict(),
         benchmark: Optional[str] = "benchmark",
         **kwargs,
     ) -> None:
@@ -176,22 +179,34 @@ class HFLM(TemplateLM):
             revision = revision + ("/" + subfolder if subfolder is not None else "")
             
             cc_task_name = "model_configuration"
-            et_mc = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
-            code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
-            et_mc.start()
-            try:
-            # emission_tracker.start_task(cc_task_name)
-                self._get_config(
-                    pretrained,
-                    revision=revision,
-                    trust_remote_code=trust_remote_code,
-                    gguf_file=gguf_file,
-                )
-            finally:
-                et_mc.stop()
-                codecarbon_results[cc_task_name] = et_mc.final_emissions_data
-            
-            # emission_tracker.stop_task()
+            if USE_CODEGREEN:
+                cg_session = energy_results.get("_codegreen_session")
+                if cg_session is not None:
+                    cg_session.start_task(cc_task_name)
+                try:
+                    self._get_config(
+                        pretrained,
+                        revision=revision,
+                        trust_remote_code=trust_remote_code,
+                        gguf_file=gguf_file,
+                    )
+                finally:
+                    if cg_session is not None:
+                        cg_session.stop_task(cc_task_name)
+            else:
+                et_mc = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
+                code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
+                et_mc.start()
+                try:
+                    self._get_config(
+                        pretrained,
+                        revision=revision,
+                        trust_remote_code=trust_remote_code,
+                        gguf_file=gguf_file,
+                    )
+                finally:
+                    et_mc.stop()
+                    energy_results[cc_task_name] = et_mc.final_emissions_data
             
             # determine which of 'causal' and 'seq2seq' backends to use for HF models
         self._get_backend(
@@ -199,59 +214,102 @@ class HFLM(TemplateLM):
         )
 
         cc_task_name = "tokenizer_initialization"
-        et_ti = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
-        code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
-        et_ti.start()
-        # emission_tracker.start_task(cc_task_name)
-        # load tokenizer so we know tokenizer vocabulary size before loading model and PEFT
-        try:
-            self._create_tokenizer(
-                pretrained,
-                tokenizer,
-                revision=revision,
-                trust_remote_code=trust_remote_code,
-                use_fast_tokenizer=use_fast_tokenizer,
-                gguf_file=gguf_file,
-                add_bos_token=add_bos_token,
-            )
-        finally:
-            et_ti.stop()
-            codecarbon_results[cc_task_name] = et_ti.final_emissions_data
-        # emission_tracker.stop_task()
+        if USE_CODEGREEN:
+            cg_session = energy_results.get("_codegreen_session")
+            if cg_session is not None:
+                cg_session.start_task(cc_task_name)
+            try:
+                self._create_tokenizer(
+                    pretrained,
+                    tokenizer,
+                    revision=revision,
+                    trust_remote_code=trust_remote_code,
+                    use_fast_tokenizer=use_fast_tokenizer,
+                    gguf_file=gguf_file,
+                    add_bos_token=add_bos_token,
+                )
+            finally:
+                if cg_session is not None:
+                    cg_session.stop_task(cc_task_name)
+        else:
+            et_ti = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
+            code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
+            et_ti.start()
+            try:
+                self._create_tokenizer(
+                    pretrained,
+                    tokenizer,
+                    revision=revision,
+                    trust_remote_code=trust_remote_code,
+                    use_fast_tokenizer=use_fast_tokenizer,
+                    gguf_file=gguf_file,
+                    add_bos_token=add_bos_token,
+                )
+            finally:
+                et_ti.stop()
+                energy_results[cc_task_name] = et_ti.final_emissions_data
 
         cc_task_name = "model_initialization"
-        # emission_tracker.start_task(cc_task_name)
-        # if we passed `pretrained` as a string, initialize our model now
-        et_mi = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
-        code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
-        et_mi.start()
-        try:
-            if isinstance(pretrained, str):
-                self._create_model(
-                    pretrained=pretrained,
-                    revision=revision,
-                    dtype=dtype,
-                    trust_remote_code=trust_remote_code,
-                    parallelize=parallelize,
-                    gpus=gpus,
-                    max_memory_per_gpu=max_memory_per_gpu,
-                    max_cpu_memory=max_cpu_memory,
-                    offload_folder=offload_folder,
-                    peft=peft,
-                    delta=delta,
-                    autogptq=autogptq,
-                    gptqmodel=gptqmodel,
-                    gguf_file=gguf_file,
-                    gptq_enabled=gptq_enabled,
-                    quantization_config=getattr(self.config, "quantization_config", None),
-                    bnb_config=bnb_config,
-                    **kwargs,
-                )
-                self._model.eval()
-        finally:
-            et_mi.stop()
-            codecarbon_results[cc_task_name] = et_mi.final_emissions_data
-        # emission_tracker.stop_task()
+        if USE_CODEGREEN:
+            cg_session = energy_results.get("_codegreen_session")
+            if cg_session is not None:
+                cg_session.start_task(cc_task_name)
+            try:
+                if isinstance(pretrained, str):
+                    self._create_model(
+                        pretrained=pretrained,
+                        revision=revision,
+                        dtype=dtype,
+                        trust_remote_code=trust_remote_code,
+                        parallelize=parallelize,
+                        gpus=gpus,
+                        max_memory_per_gpu=max_memory_per_gpu,
+                        max_cpu_memory=max_cpu_memory,
+                        offload_folder=offload_folder,
+                        peft=peft,
+                        delta=delta,
+                        autogptq=autogptq,
+                        gptqmodel=gptqmodel,
+                        gguf_file=gguf_file,
+                        gptq_enabled=gptq_enabled,
+                        quantization_config=getattr(self.config, "quantization_config", None),
+                        bnb_config=bnb_config,
+                        **kwargs,
+                    )
+                    self._model.eval()
+            finally:
+                if cg_session is not None:
+                    cg_session.stop_task(cc_task_name)
+        else:
+            et_mi = initialize_emission_tracker(project_name=cc_task_name, tracking_mode="process", save_to_file=False)
+            code_carbon_logger_handler(benchmark, cc_task_name, pretrained.split("/")[1])
+            et_mi.start()
+            try:
+                if isinstance(pretrained, str):
+                    self._create_model(
+                        pretrained=pretrained,
+                        revision=revision,
+                        dtype=dtype,
+                        trust_remote_code=trust_remote_code,
+                        parallelize=parallelize,
+                        gpus=gpus,
+                        max_memory_per_gpu=max_memory_per_gpu,
+                        max_cpu_memory=max_cpu_memory,
+                        offload_folder=offload_folder,
+                        peft=peft,
+                        delta=delta,
+                        autogptq=autogptq,
+                        gptqmodel=gptqmodel,
+                        gguf_file=gguf_file,
+                        gptq_enabled=gptq_enabled,
+                        quantization_config=getattr(self.config, "quantization_config", None),
+                        bnb_config=bnb_config,
+                        **kwargs,
+                    )
+                    self._model.eval()
+            finally:
+                et_mi.stop()
+                energy_results[cc_task_name] = et_mi.final_emissions_data
 
         # access self._model through self.model property outside this method
         if isinstance(self.model, torch.nn.Module):

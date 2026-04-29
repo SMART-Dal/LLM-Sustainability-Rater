@@ -25,6 +25,7 @@ dist/
 .ipynb_checkpoints/
 profile_default/
 ipython_config.py
+codegreen_log/
 
 # Output and data
 output/
