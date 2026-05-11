@@ -58,11 +58,11 @@ high-level map of the most relevant parts of the repo
 
 ## Install
 ```
-git clone https://github.com/tmp351/BRACE.git
-cd BRACE
+git clone git@github.com:SMART-Dal/LLM-Sustainability-Rater.git
+cd LLM-Sustainability-Rater
 python3 -m venv venv
 source venv/bin/activate
-pip install -e .
+pip install --no-cache-dir -e .
 ```
 
 ## Usage Steps
