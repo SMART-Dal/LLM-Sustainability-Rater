@@ -8,6 +8,10 @@ from lm_eval.rating_llms.utils import (
     gradient_labeling,
     create_folder,
     point_creation,
+    calculate_weights,
+    get_rank_intervals,
+    assign_ranks,
+    compute_background_classes,
 )
 from pathlib import Path
 
@@ -16,23 +20,21 @@ def calculate_euc_formula(df, w_a, w_e):
     df["distance"] = (
         2 * w_a * (1 - df["perf"]) ** 2 + 2 * w_e * (1 - df["ene_eff"]) ** 2
     ) ** 0.5
-    min_distance, max_distance = df["distance"].min(), df["distance"].max()
-    five_intervals = (max_distance - min_distance) / 5
-    df["distance_rank"] = np.ceil((df["distance"] - min_distance) / five_intervals)
-    df.loc[df["distance_rank"] == 0, "distance_rank"] = 1
-    df["distance_rank"] = 6 - df["distance_rank"]
+
+    min_distance = 0.0  # Best possible score at (1,1)
+    max_distance = np.sqrt(2)  # Worst possible score at (0,0)
+    five_intervals = max_distance / 5.0
+
+    df["distance_rank"] = assign_ranks(
+        df["distance"].values, min_distance, five_intervals, invert=True
+    ).astype(int)
     return min_distance, max_distance, five_intervals
 
 
 def distance_base_class_calc(min_distance, max_distance, five_intervals, w_a, w_e):
     X, Y = point_creation()
     val = (2 * w_e * (1 - X) ** 2 + 2 * w_a * (1 - Y) ** 2) ** 0.5
-    classes = np.ceil((val - min_distance) / five_intervals)
-    classes[classes <= 0] = 1
-    classes[classes >= 5] = 5
-    classes = 5 - classes
-
-    return classes
+    return compute_background_classes(val, min_distance, five_intervals, invert=True)
 
 
 def distance_based_computation(df, file_name, w_a, w_e):
@@ -45,27 +47,6 @@ def distance_based_computation(df, file_name, w_a, w_e):
         df,
         file_name,
     )
-
-
-def calculate_weights(w_a, w_e):
-    if w_a is not None and w_e is None:
-        w_e = 1 - w_a
-    elif w_e is not None and w_a is None:
-        w_a = 1 - w_e
-    elif w_a is None and w_e is None:
-        w_a, w_e = 0.5, 0.5
-
-    if not (0 <= w_a <= 1 and 0 <= w_e <= 1):
-        raise ValueError("Weights must be between 0 and 1")
-    if w_a + w_e != 1.0:
-        raise ValueError("The sum of weights must be 1.0")
-
-    if w_a == 0:
-        w_a = 1e-10
-    if w_e == 0:
-        w_e = 1e-10
-
-    return w_a, w_e
 
 
 if __name__ == "__main__":

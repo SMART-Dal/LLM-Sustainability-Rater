@@ -8,6 +8,10 @@ from lm_eval.rating_llms.utils import (
     gradient_labeling,
     create_folder,
     point_creation,
+    calculate_weights,
+    get_rank_intervals,
+    assign_ranks,
+    compute_background_classes
 )
 from sklearn.covariance import MinCovDet
 from scipy.stats import chi2
@@ -117,11 +121,8 @@ def calculate_score(w_a, w_e, perf, pred_perf, ene_eff):
 def regression_rank(df, b, w_a, w_e):
     predicted_perf = np.vander(df["ene_eff"], N=DEGREE + 1, increasing=True) @ b.value
     df["score"] = calculate_score(w_a, w_e, df["perf"], predicted_perf, df["ene_eff"])
-    min_score, max_score = df["score"].min(), df["score"].max()
-    five_intervals = (max_score - min_score) / 5
-    df["regression_rank"] = np.ceil((df["score"] - min_score) / five_intervals)
-    df.loc[df["regression_rank"] == 0, "regression_rank"] = 1
-    df["regression_rank"] = df["regression_rank"].astype(int)
+    min_score, five_intervals = get_rank_intervals(df["score"].values)
+    df["regression_rank"] = assign_ranks(df["score"].values, min_score, five_intervals).astype(int)
     return min_score, five_intervals
 
 
@@ -137,11 +138,7 @@ def regression_class_computation(b, min_score, five_intervals, w_a, w_e):
     deg = np.arange(DEGREE + 1)
     x_transformed = (X[..., None] ** deg) @ b.value
     calc_scores_X_Y = calculate_score(w_a, w_e, Y, x_transformed, X)
-    classes = np.ceil((calc_scores_X_Y - min_score) / five_intervals)
-    classes[classes <= 0] = 1
-    classes[classes > 5] = 5
-    classes -= 1
-    return classes
+    return compute_background_classes(calc_scores_X_Y, min_score, five_intervals)
 
 
 def regression_computation(
@@ -159,25 +156,6 @@ def regression_computation(
     )
 
 
-def calculate_weights(w_a, w_e):
-    if w_a is not None and w_e is None:
-        w_e = 1 - w_a
-    elif w_e is not None and w_a is None:
-        w_a = 1 - w_e
-    elif w_a is None and w_e is None:
-        w_a, w_e = 0.5, 0.5
-
-    if not (0 <= w_a <= 1 and 0 <= w_e <= 1):
-        raise ValueError("Weights must be between 0 and 1")
-    if w_a + w_e != 1.0:
-        raise ValueError("The sum of weights must be 1.0")
-
-    if w_a == 0:
-        w_a = 1e-10
-    if w_e == 0:
-        w_e = 1e-10
-
-    return w_a, w_e
 
 
 if __name__ == "__main__":
