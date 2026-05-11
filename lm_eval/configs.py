@@ -8,7 +8,7 @@ CODE_CARBON_LOG_DIR = MAIN_DIR / "codecarbon_log"
 CODEGREEN_LOG_DIR = MAIN_DIR / "codegreen_log"
 
 # Toggle between CodeGreen (True) and CodeCarbon (False) for energy measurement
-USE_CODEGREEN = False
+USE_CODEGREEN = True
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 CODE_CARBON_LOG_DIR.mkdir(parents=True, exist_ok=True)
