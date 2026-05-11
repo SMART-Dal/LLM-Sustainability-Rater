@@ -672,52 +672,75 @@ def accumulate_task_emissions(energy_results: dict):
     return {**multi_value_columns, **single_value_columns, **task_specific_data_values}
 
 
-def accumulate_codegreen_emissions(codegreen_report: dict):
+def accumulate_codegreen_emissions(codegreen_report: dict) -> dict:
     """Extract energy totals and per-task data from a codegreen report dict
     for writing into results.jsonl.
 
     Domain mapping:
-        package-* / core  →  cpu_energy
-        gpu*              →  gpu_energy
-        dram              →  ram_energy
+        package-* / pkg* / core  →  cpu_energy
+        gpu*                     →  gpu_energy
+        dram*                    →  ram_energy
     """
     totals = codegreen_report.get("totals", {})
     tasks = codegreen_report.get("tasks", [])
+    meta = codegreen_report.get("meta", {})
 
-    cpu_energy = 0.0
-    gpu_energy = 0.0
-    ram_energy = 0.0
+    metrics = {}
+    energy_totals = {"cpu": 0.0, "gpu": 0.0, "ram": 0.0}
     total_duration = 0.0
+    total_energy = 0.0
 
-    task_specific = {}
+    def parse_domain(domain_name: str) -> tuple[str, str]:
+        """Helper to extract the device type and ID from a domain name."""
+        idx = "".join(filter(str.isdigit, domain_name))
+        if domain_name.startswith(("package", "pkg")) or domain_name == "core":
+            return "cpu", idx
+        if domain_name.startswith("gpu"):
+            return "gpu", idx
+        if "dram" in domain_name:
+            return "ram", idx
+        return "", ""
+
+    # 1. Global domain powers
+    for domain, power in totals.get("domains_power_w", {}).items():
+        dev_type, idx = parse_domain(domain)
+        if dev_type:
+            metrics[f"{dev_type}{idx}_watts"] = round(power, 4)
+
+    # 2. Per-task metrics
     for task in tasks:
-        name = task["name"]
-        # per-task fields for results.jsonl
-        for key in ["name", "energy_j", "avg_power_w", "duration_s"]:
-            task_specific[f"{name}_{key}"] = task[key]
-            if key == "duration_s":
-                total_duration += task[key]
+        name = task.get("name", "unknown")
 
-        # accumulate domain energies
-        domains = task.get("domains", {})
-        for domain_name, energy_val in domains.items():
-            if domain_name.startswith("package") or domain_name == "core":
-                cpu_energy += energy_val
-                task_specific[f"{name}_cpu_energy_j"] = energy_val
-            elif domain_name.startswith("gpu"):
-                gpu_energy += energy_val
-                task_specific[f"{name}_gpu_energy_j"] = energy_val
-            elif domain_name == "dram":
-                ram_energy += energy_val
-                task_specific[f"{name}_ram_energy_j"] = energy_val
+        # Basic task stats
+        for key in ["name", "energy_j", "avg_power_w", "duration_s"]:
+            if key in task:
+                metrics[f"{name}_{key}"] = task[key]
+
+        total_duration += task.get("duration_s", 0.0)
+        total_energy += task.get("energy_j", 0.0)
+
+        # Task domain energies
+        for domain, energy in task.get("domains", {}).items():
+            dev_type, idx = parse_domain(domain)
+            if dev_type:
+                energy_totals[dev_type] += energy
+                metrics[f"{name}_{dev_type}{idx}_energy_j"] = round(energy, 4)
+
+        # Task domain powers
+        for domain, power in task.get("domains_power_w", {}).items():
+            dev_type, idx = parse_domain(domain)
+            if dev_type:
+                metrics[f"{name}_{dev_type}{idx}_watts"] = round(power, 4)
 
     return {
-        "cpu_energy": round(cpu_energy, 4),
-        "gpu_energy": round(gpu_energy, 4),
-        "ram_energy": round(ram_energy, 4),
-        "energy_consumed": round(totals.get("energy_j", 0.0), 4),
+        "run_id": meta.get("run_id", 0),
+        "timestamp": meta.get("started_at_local", 0),
+        "cpu_energy": round(energy_totals["cpu"], 4),
+        "gpu_energy": round(energy_totals["gpu"], 4),
+        "ram_energy": round(energy_totals["ram"], 4),
+        "energy_consumed": round(total_energy, 4),
         "duration": round(total_duration, 4),
-        **task_specific,
+        **metrics,
     }
 
 
@@ -738,11 +761,14 @@ def clean_output_data(data: dict):
             "_energy_j",
             "_avg_power_w",
             "_duration_s",
+            "_watts",
         )
         cleaned_data = {
             "model": data["model"],
             "experiments_run": data["experiments_run"],
             **cleaned_data,
+            "run_id": data["run_id"],
+            "timestamp": data["timestamp"],
             **{k: data[k] for k in energy_keys if k in data},
             "duration": data.get("duration", 0),
             "input_tokens": data.get("input_tokens", 0),
