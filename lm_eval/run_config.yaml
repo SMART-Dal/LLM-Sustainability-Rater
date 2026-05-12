@@ -72,4 +72,4 @@ bnb_config:
   - null
   - null
 
-experiments_run: "testing"
+experiments_run: "Main_Run"
