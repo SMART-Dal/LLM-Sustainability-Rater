@@ -3,17 +3,6 @@ tasks:
   - livecodebench
   - code2text_python
 model_args:
-  - "pretrained=uukuguy/speechless-zephyr-code-functionary-7b"
-  - "pretrained=infly/OpenCoder-8B-Instruct"
-  - "pretrained=ShahriarFerdoush/llama-3.2-1b-code-instruct"
-  - "pretrained=m-a-p/OpenCodeInterpreter-DS-6.7B"
-  - "pretrained=ricdomolm/mini-coder-1.7b"
-  - "pretrained=google/codegemma-2b"
-  - "pretrained=bigatuna/Qwen3-1.7B-Sushi-Coder"
-  - "pretrained=beowolx/CodeNinja-1.0-OpenChat-7B"
-  - "pretrained=ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled"
-  - "pretrained=google/codegemma-7b-it"
-  - "pretrained=dcostenco/prism-coder-7b"
   - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
   - "pretrained=bigcode/starcoderbase-1b"
   - "pretrained=bigcode/starcoder2-3b"
@@ -36,6 +25,17 @@ model_args:
   - "pretrained=ise-uiuc/Magicoder-S-DS-6.7B"
   - "pretrained=ibm-granite/granite-8b-code-base-4k"
   - "pretrained=Salesforce/codegen-2B-mono"
+  - "pretrained=uukuguy/speechless-zephyr-code-functionary-7b"
+  - "pretrained=infly/OpenCoder-8B-Instruct"
+  - "pretrained=ShahriarFerdoush/llama-3.2-1b-code-instruct"
+  - "pretrained=m-a-p/OpenCodeInterpreter-DS-6.7B"
+  - "pretrained=ricdomolm/mini-coder-1.7b"
+  - "pretrained=google/codegemma-2b"
+  - "pretrained=bigatuna/Qwen3-1.7B-Sushi-Coder"
+  - "pretrained=beowolx/CodeNinja-1.0-OpenChat-7B"
+  - "pretrained=ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled"
+  - "pretrained=google/codegemma-7b-it"
+  - "pretrained=dcostenco/prism-coder-7b"
 
 bnb_config:
   - null
