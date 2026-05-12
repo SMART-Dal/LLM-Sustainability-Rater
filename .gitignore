@@ -34,6 +34,7 @@ data/
 temp/
 test_logs/
 llm_labeling/data
+LLM_Sustainability_Benchmarking_JAWs.pdf
 
 # Caching
 lm_eval/caching/.cache
