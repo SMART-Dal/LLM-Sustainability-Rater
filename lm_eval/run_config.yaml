@@ -3,14 +3,17 @@ tasks:
   - livecodebench
   - code2text_python
 model_args:
+  - "pretrained=uukuguy/speechless-zephyr-code-functionary-7b"
+  - "pretrained=infly/OpenCoder-8B-Instruct"
+  - "pretrained=ShahriarFerdoush/llama-3.2-1b-code-instruct"
+  - "pretrained=m-a-p/OpenCodeInterpreter-DS-6.7B"
   - "pretrained=ricdomolm/mini-coder-1.7b"
   - "pretrained=google/codegemma-2b"
   - "pretrained=bigatuna/Qwen3-1.7B-Sushi-Coder"
   - "pretrained=beowolx/CodeNinja-1.0-OpenChat-7B"
   - "pretrained=ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled"
-  - "pretrained=List-cloud/List-2.0-Ultra-Coder"
-  - "pretrained=zai-org/codegeex4-all-9b"
   - "pretrained=google/codegemma-7b-it"
+  - "pretrained=dcostenco/prism-coder-7b"
   - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
   - "pretrained=bigcode/starcoderbase-1b"
   - "pretrained=bigcode/starcoder2-3b"
@@ -33,47 +36,40 @@ model_args:
   - "pretrained=ise-uiuc/Magicoder-S-DS-6.7B"
   - "pretrained=ibm-granite/granite-8b-code-base-4k"
   - "pretrained=Salesforce/codegen-2B-mono"
-  # - "pretrained=dcostenco/prism-coder-7b"
-  # - "pretrained=infly/OpenCoder-8B-Instruct"
-  # - "pretrained=replit/replit-code-v1_5-3b"
-  # - "pretrained=WisdomShell/CodeShell-7B"
-  # - "pretrained=m-a-p/OpenCodeInterpreter-DS-6.7B"
 
 bnb_config:
   - null
   - null
   - null
-  - "load_in_4bit=True"
   - null
   - null
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
   - null
   - null
-  - "load_in_4bit=True"
-  - null
-  - "load_in_4bit=True"
   - null
   - null
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
   - null
   - null
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
   - null
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
-  - "load_in_4bit=True"
   - null
-  # - null
-  # - null
-  # - null
-  # - null
-  # - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
 
-experiments_run: "test_run_work"
+experiments_run: "testing"
