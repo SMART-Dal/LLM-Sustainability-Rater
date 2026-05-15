@@ -65,6 +65,21 @@ source venv/bin/activate
 pip install --no-cache-dir -e .
 ```
 
+## Replication notes
+
+To reproduce the accuracy numbers reported in `lm_eval/results/`, two things need to be pinned after the editable install above:
+
+1. **Pin transformers / tokenizers / accelerate to the versions used when results were generated.** `pyproject.toml` uses `transformers>=4.1`, so a fresh install will pull whichever major version is latest on PyPI. transformers 5.x changes generation/tokenizer defaults in ways that alter outputs for greedy decoding; using it does not reproduce the reported scores. After the install above, run:
+    ```
+    pip install --no-cache-dir "transformers==4.55.0" "tokenizers==0.21.4" "accelerate==1.9.0"
+    ```
+
+2. **Two models require a tiny `tokenizer_config.json` patch under transformers 4.55.0.** These ship `"extra_special_tokens"` as a list, but transformers 4.55.0 expects a dict (this is fixed in 5.x). Affected models:
+    - `ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled`
+    - `dcostenco/prism-coder-7b`
+
+    After downloading the model into the HF cache, edit `~/.cache/huggingface/hub/models--<owner>--<name>/snapshots/<rev>/tokenizer_config.json` and replace the value of `"extra_special_tokens"` with `{}`. The patch is functionally neutral for these benchmarks: the special tokens themselves remain in `tokenizer.json` / `special_tokens_map.json`, so the vocabulary is unchanged; only the named-attribute accessors are dropped, which the evaluation pipeline does not use.
+
 ## Usage Steps
 - First you need to create `.env` file with your Huggingface API token in this format `HF_TOKEN=YOUR_TOKEN`.
 - `cd lm_eval`
