@@ -1,6 +1,6 @@
 model: hf
 tasks:
-  - livecodebench
+  # - livecodebench
   - code2text_python
 model_args:
   - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
@@ -72,4 +72,4 @@ bnb_config:
   - null
   - null
 
-experiments_run: "Main_Run"
+experiments_run: "FullRun_Codegreen_33Models_C2T_tf4.55_tosem-version_2026-05-14"
