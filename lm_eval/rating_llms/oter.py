@@ -66,11 +66,6 @@ def remove_derivative_outliers(all_possible_derivates):
         return None
 
 
-class TMPVar:
-    def __init__(self):
-        self.value = []
-
-
 def approximate_regression_function(df, X_clean, deriv_inliers_all):
 
     x_raw, y = X_clean[:, 0], X_clean[:, 1]
@@ -97,8 +92,6 @@ def approximate_regression_function(df, X_clean, deriv_inliers_all):
     prob = cp.Problem(objective, constraints)
     prob.solve()
 
-    # b_val = TMPVar()
-    # b_val.value = np.array([1.2, -1e8, 1e-10, 1e-10, 1e-10, 1e-10])
     return b
 
 
