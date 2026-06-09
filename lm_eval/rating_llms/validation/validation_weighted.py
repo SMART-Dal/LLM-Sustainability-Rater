@@ -5,16 +5,16 @@ from scipy.stats import spearmanr
 from pathlib import Path
 import argparse
 
-import lm_eval.rating_llms.oter as oter
-from lm_eval.rating_llms.oter import (
+import lm_eval.rating_llms.methods.oter as oter
+from lm_eval.rating_llms.methods.oter import (
     remove_outliers,
     create_all_possible_derivatives,
     remove_derivative_outliers,
     approximate_regression_function,
 )
-import lm_eval.rating_llms.circ as circ
-from lm_eval.rating_llms.circ import calculate_euc_formula
-from lm_eval.rating_llms.utils import load_task_and_preprocess
+import lm_eval.rating_llms.methods.circ as circ
+from lm_eval.rating_llms.methods.circ import calculate_euc_formula
+from lm_eval.rating_llms.utils.utils import load_task_and_preprocess
 
 # Patch OTER global constant
 oter.DEGREE = 5

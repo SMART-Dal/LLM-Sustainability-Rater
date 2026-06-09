@@ -5,9 +5,9 @@ from scipy.stats import spearmanr
 from pathlib import Path
 import argparse
 
-from lm_eval.rating_llms.base_size_rating import process_datasets, calculate_scores_and_ranks
-from lm_eval.rating_llms.size_acc import LogAccPowerLaw
-from lm_eval.rating_llms.size_ene import LogEnergyPowerLaw
+from lm_eval.rating_llms.methods.base_size_rating import process_datasets, calculate_scores_and_ranks
+from lm_eval.rating_llms.methods.size_acc import LogAccPowerLaw
+from lm_eval.rating_llms.methods.size_ene import LogEnergyPowerLaw
 
 MAIN_DIR = Path(__file__).parent.parent
 OUTPUT_FILE = MAIN_DIR / "results" / "final_results.jsonl"

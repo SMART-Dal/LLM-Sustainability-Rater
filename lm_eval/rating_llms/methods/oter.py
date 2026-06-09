@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 from lm_eval.configs import OUTPUT_FILE
-from lm_eval.rating_llms.utils import (
+from lm_eval.rating_llms.utils.utils import (
     load_task_and_preprocess,
     gradient_labeling,
     create_folder,
@@ -22,12 +22,12 @@ import sys
 from pathlib import Path
 
 
-def remove_outliers(df):
+def remove_outliers(df, mcd_percentile=0.95):
 
     X = df[["ene_eff", "perf"]].to_numpy()
     mcd = MinCovDet().fit(X)
     D2 = mcd.mahalanobis(X)
-    cut = chi2.ppf(0.95, df=2)
+    cut = chi2.ppf(mcd_percentile, df=2)
 
     outliers = D2 > cut
     inliers = ~outliers
@@ -41,11 +41,11 @@ def remove_outliers(df):
 def create_all_possible_derivatives(ene_eff, acc):
     derivatives = []
     for i in range(len(ene_eff)):
-        i_x = ene_eff[i]
-        i_y = acc[i]
+        i_x = ene_eff.iloc[i] if hasattr(ene_eff, "iloc") else ene_eff[i]
+        i_y = acc.iloc[i] if hasattr(acc, "iloc") else acc[i]
         for j in range(i + 1, len(ene_eff)):
-            new_x = ene_eff[j]
-            new_y = acc[j]
+            new_x = ene_eff.iloc[j] if hasattr(ene_eff, "iloc") else ene_eff[j]
+            new_y = acc.iloc[j] if hasattr(acc, "iloc") else acc[j]
             if (new_x < i_x and new_y > i_y) or (new_x > i_x and new_y < i_y):
                 derivatives.append(-abs((new_y - i_y) / (new_x - i_x)))
     return derivatives
@@ -66,27 +66,28 @@ def remove_derivative_outliers(all_possible_derivates):
         return None
 
 
-def approximate_regression_function(df, X_clean, deriv_inliers_all):
+def approximate_regression_function(df, X_clean, deriv_inliers_all, les_quantile=75, degree=5, intercept=1e-2):
 
     x_raw, y = X_clean[:, 0], X_clean[:, 1]
 
-    b = cp.Variable(DEGREE + 1)
+    b = cp.Variable(degree + 1)
 
     # Least-squares objective
-    x_transformed = np.vander(x_raw, N=DEGREE + 1, increasing=True)
+    x_transformed = np.vander(x_raw, N=degree + 1, increasing=True)
     objective = cp.Minimize(cp.sum_squares(x_transformed @ b - y))
 
     # Enforce f′(z) ≤ 0 on a grid
     z = np.linspace(0, 1, 50)
-    D = np.zeros((len(z), DEGREE + 1))
+    D = np.zeros((len(z), degree + 1))
     for j, zj in enumerate(z):
-        for k in range(1, DEGREE + 1):
+        for k in range(1, degree + 1):
             D[j, k] = k * zj ** (k - 1)
 
-    cons = np.percentile(deriv_inliers_all, 75) if deriv_inliers_all is not None else 0
+    cons = np.percentile(deriv_inliers_all, les_quantile) if deriv_inliers_all is not None else 0
     constraints = [
         D @ b <= cons,
-        cp.sum(b) >= 1e-2,
+        cp.sum(b) >= intercept,
+        b[0] <= 1.0
     ]  # the second constraint is for ensuring that plot lies above 0
 
     prob = cp.Problem(objective, constraints)
@@ -111,8 +112,8 @@ def calculate_score(w_a, w_e, perf, pred_perf, ene_eff):
         return (ene_eff ** (2 * w_e - 1)) * ((perf / pred_perf) ** (2 * w_a))
 
 
-def regression_rank(df, b, w_a, w_e):
-    predicted_perf = np.vander(df["ene_eff"], N=DEGREE + 1, increasing=True) @ b.value
+def regression_rank(df, b, w_a, w_e, degree=5):
+    predicted_perf = np.vander(df["ene_eff"], N=degree + 1, increasing=True) @ b.value
     df["score"] = calculate_score(w_a, w_e, df["perf"], predicted_perf, df["ene_eff"])
     min_score, five_intervals = get_rank_intervals(df["score"].values)
     df["regression_rank"] = assign_ranks(df["score"].values, min_score, five_intervals).astype(int)
@@ -185,13 +186,14 @@ if __name__ == "__main__":
     df = load_task_and_preprocess(file_name, task_name)
 
     X_clean = remove_outliers(df)
+    # X_clean = df[["ene_eff", "perf"]].to_numpy()
 
     all_possible_derivates = create_all_possible_derivatives(df["ene_eff"], df["perf"])
 
     deriv_inliers_all = remove_derivative_outliers(all_possible_derivates)
 
-    coefficients = approximate_regression_function(df, X_clean, deriv_inliers_all)
-    min_score, five_interval = regression_rank(df, coefficients, w_a, w_e)
+    coefficients = approximate_regression_function(df, X_clean, deriv_inliers_all, degree=DEGREE)
+    min_score, five_interval = regression_rank(df, coefficients, w_a, w_e, degree=DEGREE)
 
     data_dir = create_folder("OTER", file_name.stem, task_name, w_a, w_e)
 

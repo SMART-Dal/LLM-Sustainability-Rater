@@ -14,14 +14,14 @@ import logging
 
 
 def create_folder(method_name, file_name, task_name, w_a=None, w_e=None):
-    curr_dir = Path(__file__).parent
+    par_dir = Path(__file__).parent.parent
     if method_name.lower() == "size_acc":
-        data_dir = curr_dir / "data" / "acc_size" / f"{file_name}_{task_name}"
+        data_dir = par_dir / "data" / "acc_size" / f"{file_name}_{task_name}"
     elif method_name.lower() == "size_ene":
-        data_dir = curr_dir / "data" / "size_ene" / f"{file_name}_{task_name}"
+        data_dir = par_dir / "data" / "size_ene" / f"{file_name}_{task_name}"
     else:
         data_dir = (
-            curr_dir
+            par_dir
             / "data"
             / "acc_ene"
             / f"{method_name}_{file_name}_{task_name}_wa_{round(w_a, 2)}_we_{round(w_e, 2)}"

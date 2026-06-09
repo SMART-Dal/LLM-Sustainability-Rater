@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 from lm_eval.configs import OUTPUT_FILE
-from lm_eval.rating_llms.utils import (
+from lm_eval.rating_llms.utils.utils import (
     load_task_and_preprocess,
     gradient_labeling,
     create_folder,

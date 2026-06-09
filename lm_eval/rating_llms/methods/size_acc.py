@@ -2,7 +2,7 @@
 import numpy as np
 import argparse
 from pathlib import Path
-from lm_eval.rating_llms.base_size_rating import run_size_rating_pipeline
+from lm_eval.rating_llms.methods.base_size_rating import run_size_rating_pipeline
 from lm_eval.configs import OUTPUT_FILE
 
 

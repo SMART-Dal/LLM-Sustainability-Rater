@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-from lm_eval.rating_llms.utils import (
+from lm_eval.rating_llms.utils.utils import (
     load_task_and_preprocess,
     gradient_labeling,
     create_folder,
