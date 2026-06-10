@@ -52,8 +52,8 @@ def calculate_weights(w_a, w_e):
 
 
 def get_model_size_gb(model_name: str) -> float:
-    curr_dir = Path(__file__).parent
-    cache_dir = curr_dir / "data" / "acc_size"
+    par_dir = Path(__file__).parent.parent
+    cache_dir = par_dir / "data" / "acc_size"
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / "model_sizes_cache.json"
 
@@ -88,8 +88,38 @@ def get_model_size_gb(model_name: str) -> float:
 
         return size_gb
     except Exception as e:
-        logging.warning(f"Could not retrieve size for {model_name}: {e}")
-        return 0.0
+        logging.warning(f"Could not retrieve size for {model_name} from HF: {e}")
+        
+        # --- NEW EXCEPTION LOGIC ---
+        # Look for numbers followed by 'b' or 'm' (case-insensitive)
+        match = re.search(r'(?i)(\d+(?:\.\d+)?)([bm])\b', model_name)
+        
+        if match:
+            value = float(match.group(1))
+            unit = match.group(2).lower()
+            
+            # Convert to actual parameter count
+            if unit == 'b':
+                params_count = value * 1_000_000_000
+            elif unit == 'm':
+                params_count = value * 1_000_000
+            
+            # Assume FP16: 2 bytes per parameter
+            estimated_bytes = params_count * 2
+            size_gb = estimated_bytes / (1024**3)
+            
+            logging.info(f"Estimated size for {model_name} (FP16): {size_gb:.2f} GB")
+            
+            # Dump the estimated result into the cache just like the try block
+            cache[model_name] = size_gb
+            with open(cache_file, "w") as f:
+                json.dump(cache, f, indent=4)
+                
+            return size_gb
+            
+        else:
+            logging.warning(f"Could not parse parameter count from {model_name}. Returning 0.0.")
+            return 0.0
 
 
 def point_creation():
