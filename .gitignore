@@ -46,6 +46,7 @@ logs/
 *log*
 *tmp*
 *temp*
+*.tex
 
 # # RQs Data
 # *.pdf
