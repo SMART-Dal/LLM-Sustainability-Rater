@@ -10,7 +10,7 @@ from lm_eval.rating_llms.methods.size_acc import LogAccPowerLaw
 from lm_eval.rating_llms.methods.size_ene import LogEnergyPowerLaw
 
 MAIN_DIR = Path(__file__).parent.parent
-OUTPUT_FILE = MAIN_DIR / "results" / "final_results.jsonl"
+OUTPUT_FILE = MAIN_DIR / "results" / "final_results_codegreen.jsonl"
 VALIDATION_DIR = Path(__file__).parent / "data" / "validation_scaling"
 
 def calculate_cooks_distance(x, y):
