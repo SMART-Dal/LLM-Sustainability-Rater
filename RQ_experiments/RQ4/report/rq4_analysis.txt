@@ -1,0 +1,94 @@
+=== RQ4 IN-DEPTH ANALYSIS ===
+
+1. BEST AND WORST MODELS (by Size Rating)
+
+  LCB Cap. Density -> Best (Rank 5): Qwen/Qwen2.5-Coder-1.5B, Qwen/Qwen2.5-Coder-0.5B, ByteDance-Seed/Seed-Coder-8B-Instruct, bigatuna/Qwen3-1.7B-Sushi-Coder
+  LCB Cap. Density -> Worst (Rank 1): bigcode/starcoderbase-1b, bigcode/starcoder2-3b, bigcode/starcoder2-7b, Salesforce/codegen-350M-mono, stabilityai/stable-code-3b, codellama/CodeLlama-7b-Python-hf, Qwen/CodeQwen1.5-7B-Chat, ibm-granite/granite-8b-code-base-4k, Salesforce/codegen-2B-mono, ShahriarFerdoush/llama-3.2-1b-code-instruct, google/codegemma-2b, beowolx/CodeNinja-1.0-OpenChat-7B, ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled, dcostenco/prism-coder-7b
+  LCB Struct. Eff. -> Best (Rank 5): bigcode/starcoderbase-1b, Qwen/Qwen2.5-Coder-3B-Instruct, Qwen/Qwen2.5-Coder-1.5B, Qwen/Qwen2.5-Coder-0.5B, uukuguy/speechless-code-mistral-7b-v1.0, ByteDance-Seed/Seed-Coder-8B-Instruct, Qwen/CodeQwen1.5-7B-Chat, ibm-granite/granite-8b-code-base-4k, ShahriarFerdoush/llama-3.2-1b-code-instruct, google/codegemma-2b, google/codegemma-7b-it, dcostenco/prism-coder-7b
+  LCB Struct. Eff. -> Worst (Rank 1): bigcode/starcoder2-3b, bigcode/starcoder2-7b, 01-ai/Yi-Coder-9B, infly/OpenCoder-8B-Instruct, beowolx/CodeNinja-1.0-OpenChat-7B
+  CXG Cap. Density -> Best (Rank 5): deepseek-ai/deepseek-coder-1.3b-base, ibm-granite/granite-8b-code-base-4k
+  CXG Cap. Density -> Worst (Rank 1): bigcode/starcoderbase-1b, Qwen/CodeQwen1.5-7B-Chat, dcostenco/prism-coder-7b
+  CXG Struct. Eff. -> Best (Rank 5): Qwen/CodeQwen1.5-7B-Chat, dcostenco/prism-coder-7b
+  CXG Struct. Eff. -> Worst (Rank 1): deepseek-ai/deepseek-coder-6.7b-base, codellama/CodeLlama-7b-Instruct-hf, bigcode/starcoder2-7b, 01-ai/Yi-Coder-9B, codellama/CodeLlama-7b-Python-hf, ibm-granite/granite-8b-code-base-4k, uukuguy/speechless-zephyr-code-functionary-7b, infly/OpenCoder-8B-Instruct, m-a-p/OpenCodeInterpreter-DS-6.7B
+
+
+2. CURVE PLACEMENT (Score > 1 means visually Above the Curve)
+
+  Note: For Accuracy, 'Above' is Better. For Energy, 'Above' is Worse (Inefficient).
+
+  Defining 'Small Models' as <= 12.6 GB (Median Size).
+
+  LCB Size-Acc: 15 above curve, 18 below curve.
+      Small Models: 7 above, 11 below.
+  LCB Size-Ene: 16 above curve, 17 below curve.
+      Small Models: 11 above, 7 below.
+  CXG Size-Acc: 22 above curve, 11 below curve.
+      Small Models: 12 above, 6 below.
+  CXG Size-Ene: 23 above curve, 10 below curve.
+      Small Models: 13 above, 5 below.
+
+
+3. INEFFICIENCY OVERLAP
+
+  LCB: Out of 16 models with high energy (above Ene curve), 9 of them also have low capability (below Acc curve).
+      These doubly-inefficient models are: starcoder2-3b, deepseek-coder-1.3b-base, starcoder2-7b, codegen-350M-mono, stable-code-3b, CodeLlama-7b-Python-hf, codegen-2B-mono, CodeNinja-1.0-OpenChat-7B, qwen2.5-coder-3b-claude_opus_4.6-distilled
+  CXG: Out of 23 models with high energy (above Ene curve), 5 of them also have low capability (below Acc curve).
+      These doubly-inefficient models are: codegen-350M-mono, Yi-Coder-9B, rombos_Replete-Coder-Llama3-8B, mini-coder-1.7b, Qwen3-1.7B-Sushi-Coder
+
+
+4. AVERAGE MODEL SIZE BY RATING (1-5)
+
+  LCB Cap. Density:
+      Rating 1: 8.60 GB
+      Rating 2: 14.20 GB
+      Rating 3: 7.88 GB
+      Rating 4: 9.31 GB
+      Rating 5: 5.59 GB
+  LCB Struct. Eff.:
+      Rating 1: 13.81 GB
+      Rating 2: 5.09 GB
+      Rating 3: 6.39 GB
+      Rating 4: 15.17 GB
+      Rating 5: 8.92 GB
+  CXG Cap. Density:
+      Rating 1: 10.26 GB
+      Rating 2: 10.55 GB
+      Rating 3: 10.06 GB
+      Rating 4: 8.88 GB
+      Rating 5: 8.75 GB
+  CXG Struct. Eff.:
+      Rating 1: 13.72 GB
+      Rating 2: 7.01 GB
+      Rating 3: 11.50 GB
+      Rating 4: 5.66 GB
+      Rating 5: 13.27 GB
+
+
+5. HIGHEST RANK DIFFERENCE BETWEEN SIZE-ACC and SIZE-ENE
+
+  LCB: Max rank difference is 4.
+      Models with this difference: starcoderbase-1b, CodeQwen1.5-7B-Chat, granite-8b-code-base-4k, llama-3.2-1b-code-instruct, codegemma-2b, prism-coder-7b
+  CXG: Max rank difference is 4.
+      Models with this difference: CodeQwen1.5-7B-Chat, granite-8b-code-base-4k, prism-coder-7b
+
+
+6. GOOD/BAD PATTERNS (Size-Acc vs Size-Ene)
+
+  LCB Patterns:
+      Both Good (>=4): 5 models
+      Both Bad (<=2): 8 models
+      One Good, One Bad: 15 models
+  CXG Patterns:
+      Both Good (>=4): 0 models
+      Both Bad (<=2): 6 models
+      One Good, One Bad: 8 models
+
+
+7. RQ1 ENERGY-ACC (OTER) VS RQ4 SIZE-EFFICIENCY CONFLICTS
+
+  LCB:
+      Bad Overall Energy-Acc (<=2) BUT Good in Size-Acc & Size-Ene (>=4): Qwen2.5-Coder-0.5B
+      Good Overall Energy-Acc (>=4) BUT Bad in Size-Acc & Size-Ene (<=2): None
+  CXG:
+      Bad Overall Energy-Acc (<=2) BUT Good in Size-Acc & Size-Ene (>=4): None
+      Good Overall Energy-Acc (>=4) BUT Bad in Size-Acc & Size-Ene (<=2): None
