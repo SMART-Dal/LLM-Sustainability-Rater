@@ -122,10 +122,10 @@ def get_model_size_gb(model_name: str) -> float:
             return 0.0
 
 
-def point_creation():
-    n = 1600  # resolution
-    x = np.linspace(-0.1, 1.1, n)
-    y = np.linspace(-0.1, 1.1, n)
+def point_creation(resolution=1600, start_x=-0.1, start_y=-0.1, end_x=1.1, end_y=1.1):
+    n = resolution
+    x = np.linspace(start_x, end_x, n)
+    y = np.linspace(start_y, end_y, n)
     X, Y = np.meshgrid(x, y)
     return X, Y
 

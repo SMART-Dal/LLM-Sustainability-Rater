@@ -19,22 +19,33 @@ LES_Q = 75
 
 oter.DEGREE = DEGREE
 
-def get_oter_data(df):
-    X_clean = oter.remove_outliers(df, mcd_percentile=MCD_PCT)
-    derivs = oter.create_all_possible_derivatives(df["ene_eff"], df["perf"])
-    inliers = oter.remove_derivative_outliers(derivs)
-    b = oter.approximate_regression_function(df, X_clean, inliers, les_quantile=LES_Q, degree=DEGREE)
-    min_score, intervals = oter.regression_rank(df, b, W_A, W_E, degree=DEGREE)
-    classes = oter.regression_class_computation(b, min_score, intervals, W_A, W_E)
-    x_curve, y_curve = oter.draw_curve(b)
-    ranks = df["regression_rank"].values
-    return ranks, classes, (x_curve, y_curve)
+# Shared 1-5 rating colour scheme used across every RQ figure.
+RATING_LABELS = ["Weakest (1)", "Weak (2)", "Moderate (3)", "Strong (4)", "Strongest (5)"]
 
-def get_circ_data(df):
-    min_dist, max_dist, intervals = circ.calculate_euc_formula(df, W_A, W_E)
-    classes = circ.distance_base_class_calc(min_dist, max_dist, intervals, W_A, W_E)
-    ranks = df["distance_rank"].values
-    return ranks, classes
+
+def rating_cmap_norm():
+    cmap = cm.get_cmap("YlGn", 5)
+    norm = BoundaryNorm(np.arange(-0.5, 5.5, 1), cmap.N)
+    return cmap, norm
+
+
+def get_oter_data(df, w_a=W_A, w_e=W_E, coeffs=None):
+    """Rank models and build the rating background for OTER at a given weighting.
+
+    ``coeffs`` lets the caller fit the (weight-independent) reference curve once
+    and reuse it across many weightings, e.g. a weight-sweep figure.
+    """
+    if coeffs is None:
+        coeffs = oter.fit_curve(df, mcd_percentile=MCD_PCT, les_quantile=LES_Q, degree=DEGREE)
+    min_score, intervals = oter.regression_rank(df, coeffs, w_a, w_e, degree=DEGREE)
+    classes = oter.regression_class_computation(coeffs, min_score, intervals, w_a, w_e)
+    x_curve, y_curve = oter.draw_curve(coeffs)
+    return df["regression_rank"].values, classes, (x_curve, y_curve)
+
+def get_circ_data(df, w_a=W_A, w_e=W_E):
+    min_dist, max_dist, intervals = circ.calculate_euc_formula(df, w_a, w_e)
+    classes = circ.distance_base_class_calc(min_dist, max_dist, intervals, w_a, w_e)
+    return df["distance_rank"].values, classes
 
 def generate_table(df_lcb, df_cxg, out_path):
     df_merged = pd.DataFrame({
@@ -124,8 +135,7 @@ def halo_scatter(ax, x, y):
     ax.scatter(x, y, s=24, c="#1a1a1a", marker="o", edgecolors="white", linewidths=0.7, zorder=5)
 
 def plot_2x2(df_lcb, df_cxg, oter_lcb, oter_cxg, circ_lcb, circ_cxg, out_path):
-    cmap = cm.get_cmap("YlGn", 5)
-    norm = BoundaryNorm(np.arange(-0.5, 5.5, 1), cmap.N)
+    cmap, norm = rating_cmap_norm()
     extent = [-0.1, 1.1, -0.1, 1.1]
 
     fig, axes = plt.subplots(2, 2, figsize=(9, 9), sharex=True, sharey=True, layout="compressed")
@@ -176,7 +186,6 @@ def plot_2x2(df_lcb, df_cxg, oter_lcb, oter_cxg, circ_lcb, circ_cxg, out_path):
     axes[0, 0].set_ylabel("Accuracy", fontsize=16)
     axes[1, 0].set_ylabel("Accuracy", fontsize=16)
 
-    labels = ["Weakest (1)", "Weak (2)", "Moderate (3)", "Strong (4)", "Strongest (5)"]
     cbar = fig.colorbar(
         im,
         ax=axes.ravel().tolist(),
@@ -184,7 +193,7 @@ def plot_2x2(df_lcb, df_cxg, oter_lcb, oter_cxg, circ_lcb, circ_cxg, out_path):
         ticks=range(5),
         pad=0.03
     )
-    cbar.ax.set_xticklabels(labels, fontsize=13.5, fontweight="bold")
+    cbar.ax.set_xticklabels(RATING_LABELS, fontsize=13.5, fontweight="bold")
 
     plt.savefig(out_path, bbox_inches="tight", dpi=400)
     print(f"Plot saved to {out_path}")

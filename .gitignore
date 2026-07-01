@@ -48,6 +48,8 @@ logs/
 *temp*
 *.tex
 
+latex_paper/
+
 # # RQs Data
 # *.pdf
 

@@ -96,6 +96,23 @@ def approximate_regression_function(df, X_clean, deriv_inliers_all, les_quantile
     return b
 
 
+def fit_curve(df, mcd_percentile=0.95, les_quantile=75, degree=5):
+    """Fit the monotonically decreasing OTER reference curve for a dataset.
+
+    Bundles the full pipeline (outlier removal, LES estimation from pairwise
+    trade-off derivatives, constrained polynomial fit) into a single call so the
+    coefficients can be computed once and reused across different weightings.
+    """
+    X_clean = remove_outliers(df, mcd_percentile=mcd_percentile)
+    derivatives = create_all_possible_derivatives(df["ene_eff"], df["perf"])
+    deriv_inliers = remove_derivative_outliers(derivatives)
+    coefficients = approximate_regression_function(
+        df, X_clean, deriv_inliers, les_quantile=les_quantile, degree=degree
+    )
+    plt.close("all")  # remove_outliers draws a diagnostic scatter we do not persist
+    return coefficients
+
+
 def clip_value(value):
     return np.clip(value, 1e-10, None)
 
@@ -185,14 +202,7 @@ if __name__ == "__main__":
     DEGREE = 5
     df = load_task_and_preprocess(file_name, task_name)
 
-    X_clean = remove_outliers(df)
-    # X_clean = df[["ene_eff", "perf"]].to_numpy()
-
-    all_possible_derivates = create_all_possible_derivatives(df["ene_eff"], df["perf"])
-
-    deriv_inliers_all = remove_derivative_outliers(all_possible_derivates)
-
-    coefficients = approximate_regression_function(df, X_clean, deriv_inliers_all, degree=DEGREE)
+    coefficients = fit_curve(df, degree=DEGREE)
     min_score, five_interval = regression_rank(df, coefficients, w_a, w_e, degree=DEGREE)
 
     data_dir = create_folder("OTER", file_name.stem, task_name, w_a, w_e)

@@ -1,0 +1,45 @@
+=== RQ3 WEIGHTED RATING VALIDATION ===
+
+1. RANK CONTINUITY (Spearman rho over the energy-weight sweep)
+
+   Adjacent-step rho measures local smoothness; baseline rho measures
+   how far priority has reordered models relative to w_e=0.5.
+
+   LiveCodeBench OTER: min adjacent rho = 0.765, mean adjacent rho = 0.938; baseline rho at w_e=0 -> 0.789, at w_e=1 -> 0.326
+   LiveCodeBench CIRC: min adjacent rho = 0.796, mean adjacent rho = 0.928; baseline rho at w_e=0 -> 0.779, at w_e=1 -> 0.481
+   CodeXGLUE OTER: min adjacent rho = 0.794, mean adjacent rho = 0.937; baseline rho at w_e=0 -> 0.821, at w_e=1 -> -0.418
+   CodeXGLUE CIRC: min adjacent rho = 0.861, mean adjacent rho = 0.937; baseline rho at w_e=0 -> 0.218, at w_e=1 -> 0.385
+
+2. BOUNDARY COLLAPSE (exact identity at single-axis extremes)
+
+   At w_e=0 and w_e=1 both methods reduce to one linear axis and must
+   produce identical, uniformly-binned ratings.
+
+   LiveCodeBench w_e=0: OTER == CIRC for 33/33 models
+   LiveCodeBench w_e=1: OTER == CIRC for 33/33 models
+   CodeXGLUE w_e=0: OTER == CIRC for 33/33 models
+   CodeXGLUE w_e=1: OTER == CIRC for 33/33 models
+
+3. NOISE ROBUSTNESS (mean |rank drift| under +/-5% uniform noise, 200 trials)
+
+   Rank scale is 1-5; OTER refits its curve on every perturbed sample.
+
+   LiveCodeBench:
+      Balanced       (w_a=0.5, w_e=0.5)  OTER = 0.188 +/- 0.073   CIRC = 0.049 +/- 0.032
+      Accuracy-first (w_a=0.9, w_e=0.1)  OTER = 0.095 +/- 0.046   CIRC = 0.055 +/- 0.031
+      Energy-first   (w_a=0.1, w_e=0.9)  OTER = 0.237 +/- 0.121   CIRC = 0.072 +/- 0.038
+   CodeXGLUE:
+      Balanced       (w_a=0.5, w_e=0.5)  OTER = 0.309 +/- 0.162   CIRC = 0.082 +/- 0.042
+      Accuracy-first (w_a=0.9, w_e=0.1)  OTER = 0.231 +/- 0.070   CIRC = 0.176 +/- 0.053
+      Energy-first   (w_a=0.1, w_e=0.9)  OTER = 0.238 +/- 0.115   CIRC = 0.065 +/- 0.039
+
+4. WEIGHT SENSITIVITY (archetype standing vs accuracy weight w_a)
+
+   Probed on a dense synthetic field. Accuracy Dominant should rise
+   monotonically (rho ~ +1) and Energy Dominant should fall (rho ~ -1);
+   they cross near w_a=0.5. OTER depends on the per-task curve; CIRC is
+   geometric and identical across tasks.
+
+   LiveCodeBench OTER: rho(Acc-Dominant) = +1.000, rho(Ene-Dominant) = -1.000, crossover at w_a = 0.42
+   CodeXGLUE OTER: rho(Acc-Dominant) = +1.000, rho(Ene-Dominant) = -1.000, crossover at w_a = 0.28
+   CIRC (task-independent): rho(Acc-Dominant) = +1.000, rho(Ene-Dominant) = -1.000, crossover at w_a = 0.50
