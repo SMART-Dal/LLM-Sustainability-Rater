@@ -1,6 +1,6 @@
 model: hf
 tasks:
-  # - livecodebench
+  - livecodebench
   - code2text_python
 model_args:
   - "pretrained=deepseek-ai/deepseek-coder-6.7b-base"
