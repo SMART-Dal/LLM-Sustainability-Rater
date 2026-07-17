@@ -230,6 +230,7 @@ def gradient_labeling(
     filename,
     curve_plot=None,
     plot_title=None,
+    demanded_plot=None,
     extent=[-0.1, 1.1, -0.1, 1.1],
     x_lim=[-0.05, 1.05],
     y_lim=[-0.05, 1.05],
@@ -258,7 +259,21 @@ def gradient_labeling(
             linestyle="--",
             label="Fitted Curve",
         )
+        # ax.legend()
+
+    if demanded_plot is not None:              # <-- add this block
+        dx, dy = demanded_plot
+        ax.plot(
+            dx,
+            dy,
+            c="#8B0000",
+            linewidth=2.4,
+            linestyle="-",
+            label="Demanded Curve",
+        )
+    if curve_plot is not None or demanded_plot is not None:
         ax.legend()
+        
     # background fields
     im = ax.imshow(
         classes,

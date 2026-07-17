@@ -30,18 +30,36 @@ def process_datasets(file_name, task_name, law, y_col):
     return df
 
 
+# def calculate_scores_and_ranks(df, law, y_col, invert_rank):
+#     models_size = df["size_gb"].values
+#     df["expected_y"] = law.predict(models_size)
+#     df["expected_y"] = np.clip(df["expected_y"], 1e-5, None)
+
+#     df["score"] = df[y_col] / df["expected_y"]
+#     min_score, five_intervals = get_rank_intervals(df["score"].values)
+
+#     df["regression_rank"] = assign_ranks(
+#         df["score"].values, min_score, five_intervals, invert=invert_rank
+#     ).astype(int)
+
+#     return min_score, five_intervals
+
 def calculate_scores_and_ranks(df, law, y_col, invert_rank):
-    models_size = df["size_gb"].values
-    df["expected_y"] = law.predict(models_size)
-    df["expected_y"] = np.clip(df["expected_y"], 1e-5, None)
+    sizes = df["size_gb"].values
+    df["expected_y"] = np.clip(law.predict(sizes), 1e-5, None)   # fitted trend f(S) (still displayed)
 
-    df["score"] = df[y_col] / df["expected_y"]
+    if hasattr(law, "build_demand"):                 # size-accuracy law -> apply plateau penalty
+        law.build_demand(sizes)                       # builds D once, fixes mu
+        expct = np.clip(law.demanded(sizes), 1e-5, None)
+        df["demanded_y"] = expct
+    else:                                             # energy law (no plateau) -> plain trend
+        expct = df["expected_y"].values
+
+    df["score"] = df[y_col].values / expct
     min_score, five_intervals = get_rank_intervals(df["score"].values)
-
     df["regression_rank"] = assign_ranks(
         df["score"].values, min_score, five_intervals, invert=invert_rank
     ).astype(int)
-
     return min_score, five_intervals
 
 
@@ -60,20 +78,25 @@ def compute_size_plot_data(
     x_min_real, x_max_real, X, Y = get_plot_grid(x_min, x_max, y_min, y_max, n, log_x)
 
     eval_X = 10**X if log_x else X
-    expected_Y = law.predict(eval_X.flatten())
-    expected_Y = np.clip(expected_Y, 1e-5, None)
+
+    if getattr(law, "_demand_x", None) is not None:   # reuse the SAME cached D + mu
+        expected_Y = np.clip(law.demanded(eval_X.flatten()), 1e-5, None)
+    else:                                             # energy law -> plain trend
+        expected_Y = np.clip(law.predict(eval_X.flatten()), 1e-5, None)
 
     scores = Y.flatten() / expected_Y
-    classes = compute_background_classes(
-        scores, min_score, five_intervals, invert=invert_rank
-    )
+    classes = compute_background_classes(scores, min_score, five_intervals, invert=invert_rank)
     classes = classes.reshape((n, n))
 
     curve_x = np.linspace(x_min_real, x_max_real, 200)
     eval_curve_x = 10**curve_x if log_x else curve_x
-    curve_y = law.predict(eval_curve_x)
+    curve_y = law.predict(eval_curve_x)               # UNCHANGED: still the fitted curve f
+    if getattr(law, "_demand_x", None) is not None:   # demanded G (solid), acc-law only
+        demanded_y = law.demanded(eval_curve_x)
+    else:
+        demanded_y = None
 
-    return x_min_real, x_max_real, classes, curve_x, curve_y
+    return x_min_real, x_max_real, classes, curve_x, curve_y, demanded_y
 
 
 def run_size_rating_pipeline(
@@ -105,69 +128,52 @@ def run_size_rating_pipeline(
     y_min = max(0.0, min_y_val - padding_y)
     y_max = max_y_val + padding_y
 
-    # 1. Linear Scale Plot
-    x_min_lin, x_max_lin, classes_lin, curve_x_lin, curve_y_lin = (
-        compute_size_plot_data(
-            law,
-            min_score,
-            five_intervals,
-            invert_rank,
-            x_min,
-            x_max,
-            y_min,
-            y_max,
-            log_x=False,
-        )
+    x_min_lin, x_max_lin, classes_lin, curve_x_lin, curve_y_lin, demanded_lin = (
+        compute_size_plot_data(law, min_score, five_intervals, invert_rank,
+                               x_min, x_max, y_min, y_max, log_x=False)
     )
-
     gradient_labeling(
-        classes_lin,
-        df,
-        filename=f"{data_dir}/{method_name}_linear",
+        classes_lin, df, filename=f"{data_dir}/{method_name}_linear",
         curve_plot=(curve_x_lin, curve_y_lin),
+        demanded_plot=(curve_x_lin, demanded_lin) if demanded_lin is not None else None,
         extent=[x_min_lin, x_max_lin, y_min, y_max],
-        x_lim=[x_min_lin, x_max_lin],
-        y_lim=[y_min, y_max],
-        xlabel="Model Size (GB)",
-        ylabel=y_label,
-        x_col="size_gb",
-        y_col=y_col,
-        xscale="linear",
-        aspect="auto",
+        x_lim=[x_min_lin, x_max_lin], y_lim=[y_min, y_max],
+        xlabel="Model Size (GB)", ylabel=y_label,
+        x_col="size_gb", y_col=y_col, xscale="linear", aspect="auto",
     )
 
-    # 2. Log Scale Plot
-    x_min_log, x_max_log, classes_log, curve_x_log, curve_y_log = (
-        compute_size_plot_data(
-            law,
-            min_score,
-            five_intervals,
-            invert_rank,
-            x_min,
-            x_max,
-            y_min,
-            y_max,
-            log_x=True,
-        )
-    )
+    # # 2. Log Scale Plot
+    # x_min_log, x_max_log, classes_log, curve_x_log, curve_y_log = (
+    #     compute_size_plot_data(
+    #         law,
+    #         min_score,
+    #         five_intervals,
+    #         invert_rank,
+    #         x_min,
+    #         x_max,
+    #         y_min,
+    #         y_max,
+    #         log_x=True,
+    #     )
+    # )
 
-    df["log_size_gb"] = np.log10(df["size_gb"])
+    # df["log_size_gb"] = np.log10(df["size_gb"])
 
-    gradient_labeling(
-        classes_log,
-        df,
-        filename=f"{data_dir}/{method_name}_log",
-        curve_plot=(curve_x_log, curve_y_log),
-        extent=[x_min_log, x_max_log, y_min, y_max],
-        x_lim=[x_min_log, x_max_log],
-        y_lim=[y_min, y_max],
-        xlabel="Log10(Model Size in GB)",
-        ylabel=y_label,
-        x_col="log_size_gb",
-        y_col=y_col,
-        xscale="linear",
-        aspect="auto",
-    )
+    # gradient_labeling(
+    #     classes_log,
+    #     df,
+    #     filename=f"{data_dir}/{method_name}_log",
+    #     curve_plot=(curve_x_log, curve_y_log),
+    #     extent=[x_min_log, x_max_log, y_min, y_max],
+    #     x_lim=[x_min_log, x_max_log],
+    #     y_lim=[y_min, y_max],
+    #     xlabel="Log10(Model Size in GB)",
+    #     ylabel=y_label,
+    #     x_col="log_size_gb",
+    #     y_col=y_col,
+    #     xscale="linear",
+    #     aspect="auto",
+    # )
 
     df.to_excel(f"{data_dir}/rating.xlsx")
     print(f"Results saved to {data_dir}")

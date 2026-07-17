@@ -89,7 +89,11 @@ def test_orthogonality(df_acc, df_ene, suffix=""):
     # Acc
     law_acc = LogAccPowerLaw()
     law_acc.fit(df_acc["size_gb"].values, df_acc["acc_values"].values)
-    score_acc = df_acc["acc_values"] / law_acc.predict(df_acc["size_gb"].values)
+    law_acc.build_demand(df_acc["size_gb"].values)                      # <-- build demanded curve
+    demanded = np.clip(law_acc.demanded(df_acc["size_gb"].values), 1e-5, None)
+    score_acc = df_acc["acc_values"] / demanded
+
+    # score_acc = df_acc["acc_values"] / law_acc.predict(df_acc["size_gb"].values)
     rho_acc_s, p_acc_s = spearmanr(df_acc["size_gb"], score_acc)
     rho_acc_a, p_acc_a = spearmanr(df_acc["acc_values"], score_acc)
 
