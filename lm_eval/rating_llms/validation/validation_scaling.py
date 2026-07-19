@@ -15,74 +15,6 @@ VALIDATION_DIR = Path(__file__).parent / "data" / "validation_scaling"
 TASKS = [("livecodebench", "LiveCodeBench"), ("code2text_python", "CodeXGLUE")]
 
 
-def calculate_cooks_distance(x, y):
-    n = len(x)
-    p = 2
-
-    x_mean = np.mean(x)
-    Sxx = np.sum((x - x_mean)**2)
-
-    # Fit OLS
-    A = np.vstack([x, np.ones(len(x))]).T
-    coeffs, _, _, _ = np.linalg.lstsq(A, y, rcond=None)
-    y_pred = A @ coeffs
-
-    residuals = y - y_pred
-    MSE = np.sum(residuals**2) / (n - p)
-
-    # Leverage h_i
-    h = 1/n + (x - x_mean)**2 / Sxx
-
-    # Cook's Distance
-    D = (residuals**2 / (p * MSE)) * (h / (1 - h)**2)
-    return D, h, residuals
-
-
-def test_cooks_distance(df_acc, df_ene, suffix=""):
-    print("\n--- Test: Outlier Leverage (Cook's Distance) ---")
-
-    # Acc: equation y = log(-log(acc)) vs x = log(size)
-    x_acc = np.log(df_acc["size_gb"].values)
-    y_acc = np.log(-np.log(np.clip(df_acc["acc_values"].values, 1e-5, 1 - 1e-5)))
-    D_acc, _, _ = calculate_cooks_distance(x_acc, y_acc)
-
-    # Ene: equation y = log(energy) vs x = log(size)
-    x_ene = np.log(df_ene["size_gb"].values)
-    y_ene = np.log(df_ene["energy_consumed"].values)
-    D_ene, _, _ = calculate_cooks_distance(x_ene, y_ene)
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-
-    threshold_acc = 4 / len(df_acc)
-    threshold_ene = 4 / len(df_ene)
-
-    ax1.stem(df_acc["model"], D_acc)
-    ax1.axhline(threshold_acc, color='r', linestyle='--', label=f'Threshold (4/n = {threshold_acc:.3f})')
-    ax1.set_title("Cook's Distance: Capability Density (Acc)")
-    ax1.tick_params(axis='x', rotation=90)
-    ax1.legend()
-
-    ax2.stem(df_ene["model"], D_ene)
-    ax2.axhline(threshold_ene, color='r', linestyle='--', label=f'Threshold (4/n = {threshold_ene:.3f})')
-    ax2.set_title("Cook's Distance: Structural Efficiency (Ene)")
-    ax2.tick_params(axis='x', rotation=90)
-    ax2.legend()
-
-    plt.tight_layout()
-    plt.savefig(VALIDATION_DIR / f"cooks_distance{suffix}.png")
-    plt.close(fig)
-    print(f"Saved {VALIDATION_DIR}/cooks_distance{suffix}.png")
-
-    # Log outliers
-    print("Capability Density Outliers:")
-    outliers_acc = df_acc[D_acc > threshold_acc]
-    print(outliers_acc[["model", "size_gb", "acc_values"]].to_string(index=False) if not outliers_acc.empty else "None")
-
-    print("\nStructural Efficiency Outliers:")
-    outliers_ene = df_ene[D_ene > threshold_ene]
-    print(outliers_ene[["model", "size_gb", "energy_consumed"]].to_string(index=False) if not outliers_ene.empty else "None")
-
-
 def test_orthogonality(df_acc, df_ene, suffix=""):
     print("\n--- Test: Orthogonality (Scale Independence) ---")
 
@@ -95,49 +27,18 @@ def test_orthogonality(df_acc, df_ene, suffix=""):
 
     # score_acc = df_acc["acc_values"] / law_acc.predict(df_acc["size_gb"].values)
     rho_acc_s, p_acc_s = spearmanr(df_acc["size_gb"], score_acc)
-    rho_acc_a, p_acc_a = spearmanr(df_acc["acc_values"], score_acc)
 
     # Ene (Inverted score)
     law_ene = LogEnergyPowerLaw()
     law_ene.fit(df_ene["size_gb"].values, df_ene["energy_consumed"].values)
     score_ene = df_ene["energy_consumed"] / law_ene.predict(df_ene["size_gb"].values)
     rho_ene_s, p_ene_s = spearmanr(df_ene["size_gb"], score_ene)
-    rho_ene_e, p_ene_e = spearmanr(df_ene["energy_consumed"], score_ene)
 
-    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(14, 10))
-
-    ax1.scatter(df_acc["size_gb"], score_acc)
-    ax1.set_title(f"Cap. Density vs Size\nrho={rho_acc_s:.3f}, p={p_acc_s:.3f}")
-    ax1.set_xlabel("Model Size (GB)")
-    ax1.set_ylabel("Raw Score Ratio (Actual / Expected)")
-    ax1.set_xscale("log")
-
-    ax2.scatter(df_acc["acc_values"], score_acc)
-    ax2.set_title(f"Cap. Density vs Accuracy\nrho={rho_acc_a:.3f}, p={p_acc_a:.3f}")
-    ax2.set_xlabel("Accuracy")
-    ax2.set_ylabel("Raw Score Ratio")
-
-    ax3.scatter(df_ene["size_gb"], score_ene)
-    ax3.set_title(f"Struct. Eff vs Size\nrho={rho_ene_s:.3f}, p={p_ene_s:.3f}")
-    ax3.set_xlabel("Model Size (GB)")
-    ax3.set_ylabel("Raw Score Ratio (Expected / Actual)")
-    ax3.set_xscale("log")
-
-    ax4.scatter(df_ene["energy_consumed"], score_ene)
-    ax4.set_title(f"Struct. Eff vs Energy\nrho={rho_ene_e:.3f}, p={p_ene_e:.3f}")
-    ax4.set_xlabel("Energy Consumed")
-    ax4.set_ylabel("Raw Score Ratio")
-    ax4.set_xscale("log")
-
-    plt.tight_layout()
-    plt.savefig(VALIDATION_DIR / f"orthogonality{suffix}.png")
-    plt.close(fig)
+    
     print(f"Saved {VALIDATION_DIR}/orthogonality{suffix}.png")
 
     print(f"Acc Density vs Size: rho={rho_acc_s:.4f}, p={p_acc_s:.4f}")
-    print(f"Acc Density vs Acc: rho={rho_acc_a:.4f}, p={p_acc_a:.4f}")
     print(f"Ene Efficiency vs Size: rho={rho_ene_s:.4f}, p={p_ene_s:.4f}")
-    print(f"Ene Efficiency vs Energy: rho={rho_ene_e:.4f}, p={p_ene_e:.4f}")
     return {"acc_size_rho": rho_acc_s, "acc_size_p": p_acc_s,
             "ene_size_rho": rho_ene_s, "ene_size_p": p_ene_s}
 
@@ -313,7 +214,6 @@ def main():
         df_acc = process_datasets(args.file_name, task, LogAccPowerLaw(), "acc_values")
         df_ene = process_datasets(args.file_name, task, LogEnergyPowerLaw(), "energy_consumed")
 
-        test_cooks_distance(df_acc, df_ene, suffix=f"_{task}")
         per_task[label] = {
             "orth": test_orthogonality(df_acc, df_ene, suffix=f"_{task}"),
             "loo": test_loo_stability(df_acc, df_ene),

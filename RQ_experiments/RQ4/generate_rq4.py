@@ -43,10 +43,7 @@ def annotate_params_rq4(ax, x, y, params):
         arrowprops=dict(arrowstyle="->", color="black", lw=1.0, alpha=0.8)
     )
 
-# UPDATED: accepts `laws=(law_lcb, law_cxg)` so the size-adjusted demanded curve D(S)
-# can be overlaid (solid) next to the unchanged fitted trend f(S) (dashed).
-# For the energy figure, pass laws=(None, None) (or the energy laws); the overlay is
-# skipped automatically because LogEnergyPowerLaw has no demanded curve.
+
 def plot_1x2_size(df_lcb, df_cxg, lcb_data, cxg_data, out_path, xlabel, ylabel,
                   log_x=False, laws=(None, None)):
     cmap = cm.get_cmap("YlGn", 5)
@@ -64,7 +61,7 @@ def plot_1x2_size(df_lcb, df_cxg, lcb_data, cxg_data, out_path, xlabel, ylabel,
 
     im = None
     for ax, df, data, title, law in plots:
-        xmin, xmax, classes, cx, cy = data
+        xmin, xmax, classes, cx, cy, _demanded = data
         ymin, ymax = df[y_col].min(), df[y_col].max()
         padding_y = 0.1 * (ymax - ymin) if (ymax - ymin) > 0 else ymin * 0.1
         ymin_ext = max(0.0, ymin - padding_y)

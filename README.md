@@ -1,63 +1,64 @@
-# BRACE: Unified Benchmarking of Accuracy and Energy for Code Language Models
-
+# BRACE: Unified Benchmarking of Accuracy, Energy, and Size for Code Language Models
 
 ## Overview
 **[Pre-print: https://arxiv.org/abs/2511.07698](https://arxiv.org/abs/2511.07698)**
 
+This repository is the replication package for **BRACE**, a framework that benchmarks Code Language Models (*CLMs*) jointly on **energy efficiency**, **functional correctness (accuracy)**, and **model size**, and reports each on a unified **1–5** scale. Instead of collapsing these competing dimensions into a single opaque score, BRACE decouples the evaluation into three interpretable **pairwise profiles** — energy–accuracy, size–accuracy, and size–energy.
 
-This repository contains the replication package for our study titled, BRACE. We aim to benchmark energy consumption and functional correctness of code language models on software engineering related tasks. Specifcally, We experimented with 22 huggingface models on two SE benchmarks, [LiveCodeBench](https://livecodebench.github.io/) and [CodeXGLUE-CodeSummarization](https://github.com/microsoft/CodeXGLUE).
+We benchmark **33** state-of-the-art open-source *CLMs* on two software-engineering tasks — code generation ([LiveCodeBench](https://livecodebench.github.io/)) and code summarization ([CodeXGLUE](https://github.com/microsoft/CodeXGLUE)). Energy is measured locally with [CodeGreen](https://github.com/SMART-Dal/CodeGreen); accuracy and generation run on top of the [LM-Evaluation-Harness](https://github.com/EleutherAI/lm-evaluation-harness).
 
-<img src="./brace.jpg" alt="Description" style="width:35%; height:auto; display:block; margin:auto;">
+<img src="./brace.jpg" alt="BRACE overview" style="width:35%; height:auto; display:block; margin:auto;">
 
 <br></br>
 
-> **Abstract**: The rapid advancement of AI technologies and their accelerated adoption in software development necessitates a systematic evaluation of their environmental impact alongside functional correctness. 
-While prior studies have examined sustainability in large language models, existing approaches lack systematic frameworks for evaluating accuracy-energy trade-offs in Code Language Models (*CLMs*).
-In this paper, we present a framework, **BRACE**, to benchmark *CLMs* on a unified scale of energy efficiency and functional correctness (referred to as accuracy).
-We benchmark 22 state-of-the-art models on code generation and summarization tasks, proposing two rating methods: Concentric Incremental Rating Circles (CIRC) and Observation to Expectation Rating (OTER). 
-CIRC provides deterministic Euclidean-based rankings with static trade-offs that are robust to outliers, and OTER offers trend-aware evaluation with dynamic trade-offs that capture the complex correlation between energy and accuracy, each offering a distinct perspective and addressing the problem in a unique way. These rating methods enable us to rate LLMs on a 1-5 scale reflecting their combined capabilities in terms of energy efficiency and functional correctness. 
-Our analysis reveals models generally perform better in the code summarization tasks as they are not enforced to generate a grammar-based and syntactically correct output. Also, we find that models' size does not have a significant impact on their ratings, indicating that if models utilize their parameters efficiently, they can be ranked higher on these scales. 
+> **Abstract**: The rapid adoption of AI in software development calls for evaluating the environmental cost of code models alongside their functional correctness. While prior studies have examined sustainability in large language models, they lack a systematic and interpretable framework for jointly evaluating the accuracy, energy, and size trade-offs of Code Language Models (*CLMs*). We present **BRACE**, a framework that benchmarks *CLMs* across energy efficiency, functional correctness, and model size, and reports them on a unified 1–5 scale. Rather than collapsing these competing dimensions into a single opaque score, BRACE decouples the evaluation into three interpretable pairwise profiles. For the energy–accuracy trade-off, we propose two rating methods: **Concentric Incremental Rating Circles (CIRC)** provides deterministic, distance-based rankings with static trade-offs that resist outliers, and **Observation to Expectation Rating (OTER)** provides trend-aware evaluation with dynamic trade-offs that capture the complex correlation between energy and accuracy. We extend both methods with priority weighting so users can tune the relative importance of accuracy and energy. To account for deployment scale, we further introduce scaling-law-based **Performance Efficiency** and **Structural Efficiency** metrics that assess how effectively a model converts its size into accuracy and into energy savings. Benchmarking 33 *CLMs*, we find that models generally perform better on summarization, and that small model size does not by itself secure efficiency — what separates models is how densely they convert parameters into capability, not raw scale.
 
+### Research Questions
 
+- **RQ1 — Energy–Accuracy rating.** Rate CLMs on their energy–accuracy trade-off with a unified method (CIRC, OTER). *(22-model base cohort.)*
+- **RQ2 — Rating distribution shift.** Grow the cohort from 22 → 33 models and verify that ratings/ordering stay stable and justified.
+- **RQ3 — Priority elasticity.** Sweep accuracy/energy weights (`w_a`, `w_e`) and verify the weighted CIRC/OTER stay monotonic, continuous, and interpretable.
+- **RQ4 — Scaling-law efficiencies.** Rate how efficiently each model turns its size into accuracy (Performance Efficiency, ψ) and energy savings (Structural Efficiency, τ).
 
-### Repository Map
+---
 
-high-level map of the most relevant parts of the repo
+## Repository Map
+
+High-level map of the most relevant parts of the repo.
 
 ```
-├── RQs_implementation
-│   ├── Motivation
-│   └── RQ
 ├── lm_eval
-│   ├── configs.py
-│   ├── main_run.py
-│   ├── models
-│   │   └── huggingface.py
-│   ├── rating_llms
-│   ├── results
-│   ├── run_config.yaml
-│   ├── tasks
-│   │   ├── code_x_glue
-│   │   └── LiveCodeBench
+│   ├── main_run.py              # entry point: run models on benchmarks + energy profiling
+│   ├── run_config.yaml          # models/tasks/quantization to run
+│   ├── configs.py               # paths & defaults (default output: results/results.jsonl)
+│   ├── models/huggingface.py    # HF model backend
+│   ├── tasks/
+│   │   ├── LiveCodeBench/        # code generation (pass@1)
+│   │   └── code_x_glue/          # code summarization (smoothed BLEU)
+│   ├── results/                 # result files (see "Result files" below)
+│   └── rating_llms/             # the BRACE rating methods
+│       ├── methods/             # circ, oter, size_acc, size_ene
+│       ├── validation/          # statistical validation suites (RQ1–RQ4)
+│       └── utils/
+└── RQ_experiments               # scripts that reproduce the paper's tables/figures
+    ├── RQ1/  RQ2/  RQ3/  RQ4/    # generate_*.py / analyze_*.py -> report/
+    └── Motivation/
 ```
 
-- **RQ_implementation**: Study-specific materials.
-  - [Motivation](RQ_implementation/Motivation/) — background and rationale.
-  - Research Questions: [RQ](RQ_implementation/RQ/). [Statistical analysis](RQ_implementation/RQ/validation.ipynb)
-- **lm_eval**: BRACE entry points and core library.
-  - [configs.py](lm_eval/configs.py) — CLI/config plumbing and defaults.
-  - [main_run.py](lm_eval/main_run.py) — main executable entry for experiments.
-  - [models/](lm_eval/models/) — model backends; e.g., [huggingface.py](lm_eval/models/huggingface.py).
-  - [rating_llms/](lm_eval/rating_llms/) — OTER and CIRC approach to rate LLMs. 
-  - [results/](lm_eval/results/) — saved results and logs.
-  - [run_config.yaml](lm_eval/run_config.yaml) — example run configuration.
-  - [tasks/](lm_eval/tasks/) — benchmark/task definitions:
-    - CodeXGLUE (Code summarization): [code_x_glue](lm_eval/tasks/code_x_glue/)
-    - LiveCodeBench (Code Generation): [LiveCodeBench](lm_eval/tasks/LiveCodeBench/)
- 
+### Result files (`lm_eval/results/`)
+
+| File | Contents | Used for |
+|------|----------|----------|
+| `partial_results_codegreen_.jsonl` | 22 base models × 2 tasks | **RQ1** |
+| `final_results_codegreen.jsonl`    | 33 models × 2 tasks       | **RQ2, RQ3, RQ4** |
+| `results.jsonl`                    | raw run log (repeated runs, many models) | default `main_run.py` sink |
+
+> **Note.** Each curated file holds **one aggregated row per model per task**. The raw `results.jsonl` contains **repeated runs** of each model; the rating scripts do **not** deduplicate or average, so point them at the curated `*_codegreen*.jsonl` files (or aggregate `results.jsonl` first) to reproduce the paper.
+
+---
 
 ## Install
-```
+```bash
 git clone git@github.com:SMART-Dal/LLM-Sustainability-Rater.git
 cd LLM-Sustainability-Rater
 python3 -m venv venv
@@ -65,86 +66,142 @@ source venv/bin/activate
 pip install --no-cache-dir -e .
 ```
 
-## Replication notes
+### Replication notes (pinning)
 
-To reproduce the accuracy numbers reported in `lm_eval/results/`, two things need to be pinned after the editable install above:
+To reproduce the **accuracy** numbers in `lm_eval/results/`, pin the generation stack after the editable install:
 
-1. **Pin transformers / tokenizers / accelerate to the versions used when results were generated.** `pyproject.toml` uses `transformers>=4.1`, so a fresh install will pull whichever major version is latest on PyPI. transformers 5.x changes generation/tokenizer defaults in ways that alter outputs for greedy decoding; using it does not reproduce the reported scores. After the install above, run:
-    ```
-    pip install --no-cache-dir "transformers==4.55.0" "tokenizers==0.21.4" "accelerate==1.9.0"
-    ```
+1. **Two models need a one-line `tokenizer_config.json` patch under transformers 4.55.0.** They ship `"extra_special_tokens"` as a list, but 4.55.0 expects a dict (fixed in 5.x). Affected: `ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled`, `dcostenco/prism-coder-7b`. After the model downloads, edit `~/.cache/huggingface/hub/models--<owner>--<name>/snapshots/<rev>/tokenizer_config.json` and set `"extra_special_tokens"` to `{}`. This is functionally neutral for these benchmarks (the tokens remain in `tokenizer.json`/`special_tokens_map.json`; only the named-attribute accessors are dropped, which the pipeline does not use).
 
-2. **Two models require a tiny `tokenizer_config.json` patch under transformers 4.55.0.** These ship `"extra_special_tokens"` as a list, but transformers 4.55.0 expects a dict (this is fixed in 5.x). Affected models:
-    - `ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled`
-    - `dcostenco/prism-coder-7b`
+---
 
-    After downloading the model into the HF cache, edit `~/.cache/huggingface/hub/models--<owner>--<name>/snapshots/<rev>/tokenizer_config.json` and replace the value of `"extra_special_tokens"` with `{}`. The patch is functionally neutral for these benchmarks: the special tokens themselves remain in `tokenizer.json` / `special_tokens_map.json`, so the vocabulary is unchanged; only the named-attribute accessors are dropped, which the evaluation pipeline does not use.
+## Usage
 
-## Usage Steps
-- First you need to create `.env` file with your Huggingface API token in this format `HF_TOKEN=YOUR_TOKEN`.
-- `cd lm_eval`
-- Then you need to configure `run_config.yaml` file to specify the models and benchmarks.
-    - `model`: This tag should be set to `hf` because our main goal is to run base models without any optimizations
-    - `tasks`: You can extract the list of tasks with `lm-eval --tasks list` command.
-    - `model_args`: Any argument that `AutoModel.from_pretrained` of huggingface takes.
-    - `bnb_config`: for each model you define in `model_args`, you should specify a bnb tag that lets model know if it needs to quantize the model with bitsandbytes quantization. For instance, you can set `load_in_4bit=True`. The `model_args` and `bnb_config` lists are index-aligned, such that each model configuration corresponds to its respective quantization setting.
-    - `experiments_run`: Simple tag to determine the purpose of your project. It will be stored in the final results file so you can extract and filter your results.
-- Then you can run the command the `python main_run.py`. Each model specified in the yaml file will run sequentially on one task a time.
-- The final results will be stored in `results/results.jsonl`. Also, if you need to take a look at each model specific energy log by codecarbon, you can view `codecarbon_log/{task_name}/{model_name}/{model_stage}.log`
-- After generating results, you can rate your LLMs on a benchmark by running `python rating_llms/{approach}.py --task_name {task_name} --file_name {file_name}` where `task_name` is the tasks you specified in `run_config.yaml` and `file_name` will point to default generated `results.jsonl` file unless you specify. The results of ranking will be stored in `rating_llm/data` 
+### 0. Environment
+Create a `.env` file with your HuggingFace token (used to look up model sizes for RQ4):
+```
+HF_TOKEN=YOUR_TOKEN
+```
+
+### 1. Run models & measure energy + accuracy (`main_run.py`)
+```bash
+cd lm_eval
+# edit run_config.yaml first (see below), then:
+python main_run.py
+```
+Configure `run_config.yaml`:
+- `model`: `hf` (run base HF models without optimizations).
+- `tasks`: benchmark task names (`lm-eval --tasks list`); this study uses `livecodebench` and `code2text_python`.
+- `model_args`: any argument `AutoModel.from_pretrained` accepts.
+- `bnb_config`: per-model bitsandbytes quantization (index-aligned with `model_args`); e.g. `load_in_4bit=True`.
+- `experiments_run`: a tag stored in the results for later filtering.
+
+Each model runs **sequentially**, one task at a time. Results append to `results/results.jsonl`; per-model energy logs land in `codegreen_log/{task_name}/{model_name}/{stage}.log`.
+
+### 2. Energy–Accuracy rating — CIRC & OTER (RQ1–RQ3)
+Run from the **repo root**:
+```bash
+# CIRC (deterministic, distance-based)
+python -m lm_eval.rating_llms.methods.circ \
+    --task_name livecodebench \
+    --file_name lm_eval/results/partial_results_codegreen_.jsonl
+
+# OTER (trend-aware)
+python -m lm_eval.rating_llms.methods.oter \
+    --task_name code2text_python \
+    --file_name lm_eval/results/partial_results_codegreen_.jsonl
+```
+Flags:
+- `--task_name` (required): `livecodebench` or `code2text_python`.
+- `--file_name` (default `lm_eval/results/results.jsonl`): the `.jsonl` result file.
+- `--w_a` / `--w_e` (optional): accuracy / energy priority weights, must sum to 1 (default `0.5`/`0.5`). Passing one infers the other. `w_e=1` → pure energy, `w_e=0` → pure accuracy.
+
+**Output** → `lm_eval/rating_llms/data/acc_ene/{METHOD}_{file}_{task}_wa_{wa}_we_{we}/` containing `rating.xlsx` and the rating-region plot (`distance.pdf` for CIRC, `regression.pdf` for OTER).
+
+### 3. Size-efficiency rating — Performance (ψ) & Structural (τ) Efficiency (RQ4)
+```bash
+# size vs accuracy  (Performance Efficiency, ψ)
+python -m lm_eval.rating_llms.methods.size_acc \
+    --task_name livecodebench \
+    --file_name lm_eval/results/final_results_codegreen.jsonl
+
+# size vs energy    (Structural Efficiency, τ)
+python -m lm_eval.rating_llms.methods.size_ene \
+    --task_name livecodebench \
+    --file_name lm_eval/results/final_results_codegreen.jsonl
+```
+Model sizes are fetched from HuggingFace (memory footprint in GB) and cached in `lm_eval/rating_llms/data/acc_size/model_sizes_cache.json`.
+**Output** → `data/acc_size/{file}_{task}/` and `data/size_ene/{file}_{task}/` (`rating.xlsx` + rating plot).
+
+### 4. Reproduce the paper's tables, figures, and statistics
+
+**Per-RQ tables & figures** (written to each `RQ_experiments/RQ*/report/`):
+```bash
+python RQ_experiments/RQ1/generate_rq1.py   # Table 1 + rq1_plot_grid.pdf  (22 models)
+python RQ_experiments/RQ2/generate_rq2.py   # Table 2 + rq2_plot_grid.pdf  (33 models)
+python RQ_experiments/RQ3/generate_rq3.py   # weight-sweep grid, continuity & sensitivity figs
+python RQ_experiments/RQ3/analyze_rq3.py    # rq3_analysis.txt (weighted-rating validation)
+python RQ_experiments/RQ4/generate_rq4.py   # Table 3 + size-acc / size-ene plots
+python RQ_experiments/RQ4/analyze_rq4.py    # rq4_analysis.txt (in-depth size analysis)
+```
+
+**Statistical validation suites** (from the repo root):
+```bash
+python -m lm_eval.rating_llms.validation.validation_base      # RQ1: Kruskal-Wallis size-bias, LOO, noise, OTER hyperparam & outlier sensitivity
+python -m lm_eval.rating_llms.validation.rating_stability     # RQ2: ordering stability & rating shifts (needs RQ1+RQ2 tables generated first)
+python -m lm_eval.rating_llms.validation.validation_scaling   # RQ4: orthogonality, LOO, noise, size-regime extrapolation
+# RQ3 weighted-rating validation is invoked by RQ_experiments/RQ3/analyze_rq3.py
+```
+
+---
 
 ## Results
-### Models Rating on LiveCodeBench and CodeXGLUE
-<!-- ``` -->
-| ID  | Model                                | LCB_Accuracy | LCB_Efficiency | CXG_Accuracy | CXG_Efficiency | LCB_CIRC | LCB_OTER | CXG_CIRC | CXG_OTER |
-|-----|--------------------------------------|--------------|----------------|--------------|----------------|---------------|---------------|---------------|---------------|
-| M1  | deepseek-coder-6.7b-base              | 0.23         | 0.32           | 0.47         | 0.23           | 2             | 1             | 2             | 3             |
-| M2  | starcoderbase-1b                       | 0.00         | 0.93           | 0.00         | 0.88           | 2             | 1             | 2             | 1             |
-| M3  | starcoder2-3b                         | 0.02         | 0.23           | 0.37         | 0.32           | 1             | 1             | 2             | 3             |
-| M4  | CodeLlama-7b-Instruct-hf              | 0.21         | 0.82           | 0.76         | 0.23           | 3             | 1             | 3             | 4             |
-| M5  | Qwen2.5-Coder-3B-Instruct              | 0.52         | 0.96           | 0.36         | 0.62           | 4             | 3             | 3             | 3             |
-| M6  | Qwen2.5-Coder-7B-Instruct             | 0.38         | 0.78           | 0.36         | 0.76           | 3             | 2             | 3             | 3             |
-| M7  | Qwen2.5-Coder-1.5B                     | 0.48         | 1.00           | 0.31         | 0.90           | 4             | 3             | 3             | 3             |
-| M8  | deepseek-coder-1.3b-base               | 0.10         | 0.78           | 0.70         | 0.81           | 2             | 1             | 4             | 5             |
-| M9  | deepseek-coder-7b-instruct-v1.5       | 0.58         | 0.77           | 0.35         | 0.35           | 4             | 3             | 2             | 2             |
-| M10 | starcoder2-7b                         | 0.04         | 0.15           | 0.56         | 0.21           | 1             | 1             | 2             | 3             |
-| M11 | codegen-350M-mono                    | 0.02         | 0.86           | 0.09         | 0.86           | 2             | 1             | 2             | 1             |
-| M12 | Qwen2.5-Coder-0.5B                   | 0.27         | 0.99           | 0.37         | 0.91           | 3             | 2             | 3             | 3             |
-| M13 | Yi-Coder-9B                           | 0.33         | 0.00           | 0.16         | 0.00           | 1             | 1             | 1             | 1             |
-| M14 | rombos_Replete-Coder-Llama3-8B        | 0.21         | 0.74           | 0.20         | 0.28           | 3             | 1             | 2             | 2             |
-| M15 | speechless-code-mistral-7b-v1.0       | 0.31         | 0.85           | 0.37         | 0.60           | 3             | 2             | 3             | 3             |
-| M16 | stable-code-3b                         | 0.06         | 0.68           | 0.53         | 0.68           | 2             | 1             | 3             | 4             |
-| M17 | CodeLlama-7b-Python-hf                | 0.15         | 0.73           | 0.38         | 0.23           | 2             | 1             | 2             | 2             |
-| M18 | Seed-Coder-8B-Instruct                | 1.00         | 0.88           | 0.31         | 0.59           | 5             | 5             | 3             | 2             |
-| M19 | CodeQwen1.5-7B-Chat                   | 0.06         | 0.99           | 0.03         | 1.00           | 2             | 1             | 2             | 1             |
-| M20 | Magicoder-S-DS-6.7B                   | 0.42         | 0.61           | 0.39         | 0.42           | 3             | 2             | 3             | 3             |
-| M21 | granite-8b-code-base-4k               | 0.10         | 1.00           | 1.00         | 0.14           | 2             | 1             | 2             | 5             |
-| M22 | codegen-2B-mono                        | 0.02         | 0.68           | 0.45         | 0.57           | 2             | 1             | 3             | 3             |
-<!-- ``` -->
 
-### Results of OTER and CIRC Rating on Benchmarks 
-These plots illustrate the ratings of models on each task-method pair. Also they show the distribution of model ratings across different energy–accuracy combinations.
-Each contour region represents how models with similar trade-offs between energy efficiency and accuracy are rated within that range.  
-<br></br>
-<img src="RQ_implementation/RQ/all_in_one.jpg" alt="Description" style="width:45%; height:30%; display:block; margin:auto;">
+### RQ1 — Energy–Accuracy ratings (22 base models)
+Normalized accuracy (`A`) and energy efficiency (`E`), with CIRC/OTER ratings per benchmark (LCB = LiveCodeBench, CXG = CodeXGLUE). These are regenerated by `RQ_experiments/RQ1/generate_rq1.py`.
 
-<br></br>
-### Pairwise Variance of Benchmarks and Rating Methods
+| ID  | Model | LCB A | LCB E | CXG A | CXG E | LCB CIRC | LCB OTER | CXG CIRC | CXG OTER |
+|-----|-------|:-----:|:-----:|:-----:|:-----:|:--------:|:--------:|:--------:|:--------:|
+| M1  | deepseek-coder-6.7b-base        | 0.23 | 0.31 | 0.47 | 0.23 | 2 | 1 | 2 | 3 |
+| M2  | starcoderbase-1b                | 0.00 | 0.93 | 0.00 | 0.88 | 2 | 1 | 2 | 1 |
+| M3  | starcoder2-3b                   | 0.02 | 0.23 | 0.37 | 0.32 | 1 | 1 | 2 | 3 |
+| M4  | CodeLlama-7b-Instruct-hf        | 0.21 | 0.82 | 0.76 | 0.23 | 3 | 1 | 3 | 4 |
+| M5  | Qwen2.5-Coder-3B-Instruct       | 0.52 | 0.95 | 0.36 | 0.57 | 4 | 3 | 3 | 3 |
+| M6  | Qwen2.5-Coder-7B-Instruct       | 0.38 | 0.78 | 0.36 | 0.76 | 3 | 2 | 3 | 3 |
+| M7  | Qwen2.5-Coder-1.5B              | 0.48 | 0.99 | 0.31 | 0.88 | 4 | 3 | 3 | 3 |
+| M8  | deepseek-coder-1.3b-base        | 0.10 | 0.76 | 0.70 | 0.79 | 2 | 1 | 4 | 5 |
+| M9  | deepseek-coder-7b-instruct-v1.5 | 0.58 | 0.77 | 0.35 | 0.35 | 4 | 3 | 2 | 2 |
+| M10 | starcoder2-7b                   | 0.04 | 0.15 | 0.56 | 0.21 | 1 | 1 | 2 | 3 |
+| M11 | codegen-350M-mono               | 0.02 | 0.83 | 0.09 | 0.83 | 2 | 1 | 2 | 1 |
+| M12 | Qwen2.5-Coder-0.5B              | 0.27 | 0.99 | 0.37 | 0.88 | 3 | 2 | 3 | 3 |
+| M13 | Yi-Coder-9B                     | 0.33 | 0.00 | 0.16 | 0.00 | 1 | 1 | 1 | 1 |
+| M14 | rombos_Replete-Coder-Llama3-8B  | 0.21 | 0.74 | 0.20 | 0.28 | 3 | 1 | 2 | 2 |
+| M15 | speechless-code-mistral-7b-v1.0 | 0.31 | 0.85 | 0.37 | 0.60 | 3 | 2 | 3 | 3 |
+| M16 | stable-code-3b                  | 0.06 | 0.68 | 0.53 | 0.67 | 2 | 1 | 3 | 4 |
+| M17 | CodeLlama-7b-Python-hf          | 0.15 | 0.73 | 0.38 | 0.23 | 2 | 1 | 2 | 2 |
+| M18 | Seed-Coder-8B-Instruct          | 1.00 | 0.88 | 0.31 | 0.59 | 5 | 5 | 3 | 2 |
+| M19 | CodeQwen1.5-7B-Chat             | 0.06 | 0.99 | 0.03 | 1.00 | 2 | 1 | 2 | 1 |
+| M20 | Magicoder-S-DS-6.7B             | 0.42 | 0.62 | 0.39 | 0.42 | 3 | 2 | 3 | 3 |
+| M21 | granite-8b-code-base-4k         | 0.10 | 1.00 | 1.00 | 0.14 | 2 | 1 | 2 | 5 |
+| M22 | codegen-2B-mono                 | 0.02 | 0.64 | 0.45 | 0.51 | 2 | 1 | 3 | 3 |
 
-The first row of the following plots demonstrate the how OTER and CIRC behave differently across tasks. While the second row indicate how tasks impact the rating of models for each technique.
-<table>
-  <tr>
-    <td><img src="RQ_implementation/RQ/c2t_scores_comparison.jpg" alt="Plot 1" style="width:100%; height:auto;"></td>
-    <td><img src="RQ_implementation/RQ/lcb_scores_comparison.jpg" alt="Plot 2" style="width:100%; height:auto;"></td>
-  </tr>
-  <tr>
-    <td><img src="RQ_implementation/RQ/scores_distance_comparison.jpg" alt="Plot 3" style="width:100%; height:auto;"></td>
-    <td><img src="RQ_implementation/RQ/scores_regression_comparison.jpg" alt="Plot 4" style="width:100%; height:auto;"></td>
-  </tr>
-</table>
+The full **33-model** ratings (RQ2), the **weighted** ratings (RQ3), and the **size-efficiency** ratings ψ/τ (RQ4) are regenerated into `RQ_experiments/RQ2/report/`, `RQ3/report/`, and `RQ4/report/` respectively (`*_table.xlsx`, `*_table.tex`, and `*.pdf` figures).
 
+### Generated artifacts per RQ
 
-### Experimented Models for BRACE:
+| RQ | Command | Key outputs (`RQ_experiments/RQ*/report/`) |
+|----|---------|--------------------------------------------|
+| RQ1 | `generate_rq1.py` | `rq1_table.{xlsx,tex}`, `rq1_plot_grid.pdf` |
+| RQ2 | `generate_rq2.py` | `rq2_table.{xlsx,tex}`, `rq2_plot_grid.pdf` |
+| RQ3 | `generate_rq3.py`, `analyze_rq3.py` | `rq3_weight_grid.pdf`, `rq3_continuity.pdf`, `rq3_weight_sensitivity.pdf`, `rq3_weight_ratings.xlsx`, `rq3_analysis.txt` |
+| RQ4 | `generate_rq4.py`, `analyze_rq4.py` | `rq4_table.{xlsx,tex}`, `rq4_size_acc_plot.pdf`, `rq4_size_ene_plot.pdf`, `rq4_analysis.txt` |
+
+---
+
+## Experimented Models (33)
+
+<details>
+<summary>Click to expand the full list</summary>
+
 - [deepseek-ai/deepseek-coder-6.7b-base](https://huggingface.co/deepseek-ai/deepseek-coder-6.7b-base)
 - [bigcode/starcoderbase-1b](https://huggingface.co/bigcode/starcoderbase-1b)
 - [bigcode/starcoder2-3b](https://huggingface.co/bigcode/starcoder2-3b)
@@ -167,11 +224,25 @@ The first row of the following plots demonstrate the how OTER and CIRC behave di
 - [ise-uiuc/Magicoder-S-DS-6.7B](https://huggingface.co/ise-uiuc/Magicoder-S-DS-6.7B)
 - [ibm-granite/granite-8b-code-base-4k](https://huggingface.co/ibm-granite/granite-8b-code-base-4k)
 - [Salesforce/codegen-2B-mono](https://huggingface.co/Salesforce/codegen-2B-mono)
+- [uukuguy/speechless-zephyr-code-functionary-7b](https://huggingface.co/uukuguy/speechless-zephyr-code-functionary-7b)
+- [infly/OpenCoder-8B-Instruct](https://huggingface.co/infly/OpenCoder-8B-Instruct)
+- [ShahriarFerdoush/llama-3.2-1b-code-instruct](https://huggingface.co/ShahriarFerdoush/llama-3.2-1b-code-instruct)
+- [m-a-p/OpenCodeInterpreter-DS-6.7B](https://huggingface.co/m-a-p/OpenCodeInterpreter-DS-6.7B)
+- [ricdomolm/mini-coder-1.7b](https://huggingface.co/ricdomolm/mini-coder-1.7b)
+- [google/codegemma-2b](https://huggingface.co/google/codegemma-2b)
+- [bigatuna/Qwen3-1.7B-Sushi-Coder](https://huggingface.co/bigatuna/Qwen3-1.7B-Sushi-Coder)
+- [beowolx/CodeNinja-1.0-OpenChat-7B](https://huggingface.co/beowolx/CodeNinja-1.0-OpenChat-7B)
+- [ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled](https://huggingface.co/ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled)
+- [google/codegemma-7b-it](https://huggingface.co/google/codegemma-7b-it)
+- [dcostenco/prism-coder-7b](https://huggingface.co/dcostenco/prism-coder-7b)
 
+</details>
 
+The first 22 models form the RQ1 base cohort; models 23–33 are the RQ2 extension.
 
+---
 
 #### Credit
 - [LM-Evaluation-Harness](https://github.com/EleutherAI/lm-evaluation-harness)
-- [CodeCarbon](https://github.com/mlco2/codecarbon)
+- [CodeGreen](https://github.com/SMART-Dal/CodeGreen)
 - [LiveCodeBench](https://github.com/EleutherAI/lm-evaluation-harness/pull/3078)

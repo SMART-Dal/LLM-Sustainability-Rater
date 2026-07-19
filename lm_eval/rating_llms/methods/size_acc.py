@@ -32,8 +32,6 @@ class LogAccPowerLaw:
 
         if self.coeffs[0, 0] > 0:
             self.coeffs = np.array([[0.0], [float(np.mean(y_fit))]])
-            print("[LogAccPowerLaw] non-increasing fit detected; "
-                  "clamped size-accuracy trend to flat (alpha=0).")
 
     def predict(self, flops: np.ndarray) -> np.ndarray:
         assert self.coeffs is not None
