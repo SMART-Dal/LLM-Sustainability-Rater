@@ -142,7 +142,7 @@ def test_noise_robustness(df_acc, df_ene, trials=20, eps=0.05):
             dfp["size_gb"] = np.clip(dfp["size_gb"] * (1 + noise_x), 1e-5, None)
 
             if y_col == "acc_values":
-                dfp[y_col] = np.clip(dfp[y_col] + noise_y, 1e-5, 1 - 1e-5)
+                dfp[y_col] = np.clip(dfp[y_col] * (1 + noise_y), 1e-5, 1 - 1e-5)
             else:
                 dfp[y_col] = np.clip(dfp[y_col] * (1 + noise_y), 1e-5, None)
 
