@@ -1,0 +1,133 @@
+=== RQ2 INCREMENTAL COHORT-GROWTH VALIDATION ===
+
+0. SETUP
+
+   Base cohort: 22 models (the RQ1 set).
+   Newcomers admitted one at a time, in ascending model id: M23, M24, M25, M26, M27, M28, M29, M30, M31, M32, M33
+   Each cohort is renormalised on its own extremes; OTER refits its curve
+   at every step and CIRC is recomputed in closed form.
+
+1. ORDERING STABILITY OF THE ORIGINAL 22 MODELS
+
+   tau/agreement are computed on the 22 original models only. The _base
+   columns compare a step with the starting cohort (total drift); the _prev
+   columns compare it with the step before (disruption of one admission).
+   Agreement is the fraction of the 22 models holding the same rating.
+
+   LiveCodeBench
+      OTER:
+          t  admitted  tau_base  tau_prev  agree_base  agree_prev  changed
+          1  M23         1.000     1.000       1.00        1.00         0
+          2  M24         1.000     1.000       1.00        1.00         0
+          3  M25         1.000     1.000       1.00        1.00         0
+          4  M26         1.000     1.000       1.00        1.00         0
+          5  M27         0.992     0.992       0.95        0.95         1
+          6  M28         0.992     0.992       0.91        0.95         2
+          7  M29         0.978     0.985       0.86        0.95         3
+          8  M30         0.978     1.000       0.86        1.00         3
+          9  M31         1.000     0.978       1.00        0.86         0
+         10  M32         1.000     1.000       1.00        1.00         0
+         11  M33         0.970     0.970       0.86        0.86         3
+         over the 11 admissions: tau_base min 0.970 / mean 0.992; tau_prev min 0.970 / mean 0.993; agree_base min 0.86 / mean 0.95
+      CIRC: identical to t=0 at all 11 steps (tau = 1.000, agreement = 1.00 throughout).
+
+   CodeXGLUE
+      OTER:
+          t  admitted  tau_base  tau_prev  agree_base  agree_prev  changed
+          1  M23         0.963     0.963       0.95        0.95         1
+          2  M24         0.963     1.000       0.95        1.00         1
+          3  M25         0.963     1.000       0.95        1.00         1
+          4  M26         0.963     1.000       0.95        1.00         1
+          5  M27         0.963     1.000       0.95        1.00         1
+          6  M28         0.946     0.977       0.91        0.95         2
+          7  M29         0.946     1.000       0.91        1.00         2
+          8  M30         0.946     1.000       0.91        1.00         2
+          9  M31         0.963     0.977       0.95        0.95         1
+         10  M32         0.963     1.000       0.95        1.00         1
+         11  M33         0.870     0.857       0.77        0.73         5
+         over the 11 admissions: tau_base min 0.870 / mean 0.950; tau_prev min 0.857 / mean 0.980; agree_base min 0.77 / mean 0.93
+      CIRC: identical to t=0 at all 11 steps (tau = 1.000, agreement = 1.00 throughout).
+
+2. HOW MUCH DOES AN INDIVIDUAL RATING MOVE?
+
+   Variance of each original model's 12 ratings (t=0 through t=11). A model
+   rated the same at every step contributes zero, so the maximum bounds how
+   unsettled any single model ever was.
+
+   LiveCodeBench OTER: mean variance 0.038, max 0.417 (M7); largest spread 2 class(es); 3 of 22 models have any spread at all.
+      per-model variance: M7 0.417; M5 0.222; M12 0.188
+   LiveCodeBench CIRC: every rating constant (variance = 0.000 for all 22 models).
+   CodeXGLUE OTER: mean variance 0.032, max 0.188 (M14); largest spread 1 class(es); 7 of 22 models have any spread at all.
+      per-model variance: M14 0.188; M3 0.139; M4 0.076; M9 0.076; M10 0.076; M17 0.076; M18 0.076
+   CodeXGLUE CIRC: every rating constant (variance = 0.000 for all 22 models).
+
+3. PER-MODEL TRAJECTORIES
+
+   Rating path of each original model that ever leaves its starting class,
+   with consecutive repeats collapsed.
+
+   LiveCodeBench OTER:
+      M5   3 -> 4 -> 3 -> 4     [permanent]
+      M7   3 -> 4 -> 3 -> 5     [permanent]
+      M12  2 -> 3 -> 2 -> 3     [permanent]
+   LiveCodeBench CIRC: no original model changes class.
+   CodeXGLUE OTER:
+      M3   3 -> 2 -> 3          [transient (returns)]
+      M4   4 -> 5               [permanent]
+      M9   2 -> 3               [permanent]
+      M10  3 -> 4               [permanent]
+      M14  2 -> 1 -> 2          [transient (returns)]
+      M17  2 -> 3               [permanent]
+      M18  2 -> 3               [permanent]
+   CodeXGLUE CIRC: no original model changes class.
+
+4. MODELS EXCLUDED FROM THE CURVE FIT
+
+   OTER fits its curve to the robust-covariance inliers only, so the fit
+   changes when the excluded set changes and not merely when a model is
+   added. 'entering' and 'leaving' are relative to the previous step.
+
+   LiveCodeBench
+      t=0  base   5 excluded: M1, M3, M10, M13, M18
+      t=1  +M23   5 excluded: M1, M3, M10, M13, M18
+      t=2  +M24   6 excluded: M1, M3, M10, M13, M18, M24
+               entering: M24 | leaving: none
+      t=3  +M25   7 excluded: M1, M3, M9, M10, M13, M18, M24
+               entering: M9 | leaving: none
+      t=4  +M26   6 excluded: M1, M3, M10, M13, M18, M24
+               entering: none | leaving: M9
+      t=5  +M27   9 excluded: M1, M3, M5, M7, M9, M10, M13, M18, M24
+               entering: M5, M7, M9 | leaving: none
+      t=6  +M28   9 excluded: M1, M3, M5, M7, M9, M10, M13, M18, M24
+      t=7  +M29   8 excluded: M1, M3, M5, M7, M10, M13, M18, M24
+               entering: none | leaving: M9
+      t=8  +M30   9 excluded: M1, M3, M5, M7, M10, M13, M18, M24, M30
+               entering: M30 | leaving: none
+      t=9  +M31   7 excluded: M1, M3, M10, M13, M18, M24, M30
+               entering: none | leaving: M5, M7
+      t=10 +M32   8 excluded: M1, M3, M10, M13, M18, M24, M30, M31
+               entering: M31 | leaving: none
+      t=11 +M33   10 excluded: M1, M3, M5, M7, M10, M13, M18, M24, M30, M31
+               entering: M5, M7 | leaving: none
+
+   CodeXGLUE
+      t=0  base   8 excluded: M2, M4, M8, M11, M13, M14, M19, M21
+      t=1  +M23   10 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21
+               entering: M10, M16 | leaving: none
+      t=2  +M24   10 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21
+      t=3  +M25   11 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21, M25
+               entering: M25 | leaving: none
+      t=4  +M26   11 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21, M25
+      t=5  +M27   12 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21, M25, M27
+               entering: M27 | leaving: none
+      t=6  +M28   9 excluded: M2, M4, M8, M11, M13, M14, M16, M19, M21
+               entering: none | leaving: M10, M25, M27
+      t=7  +M29   6 excluded: M2, M4, M8, M13, M19, M21
+               entering: none | leaving: M11, M14, M16
+      t=8  +M30   6 excluded: M2, M4, M8, M13, M19, M21
+      t=9  +M31   12 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21, M25, M27
+               entering: M10, M11, M14, M16, M25, M27 | leaving: none
+      t=10 +M32   13 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21, M25, M27, M29
+               entering: M29 | leaving: none
+      t=11 +M33   14 excluded: M2, M4, M8, M10, M11, M13, M14, M16, M19, M21, M25, M27, M29, M33
+               entering: M33 | leaving: none
