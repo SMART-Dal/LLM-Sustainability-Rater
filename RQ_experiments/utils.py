@@ -119,16 +119,28 @@ def annotate_params(ax, x, y, params):
     for xi, yi, pi in zip(x, y, params):
         texts.append(ax.text(
             xi, yi, str(pi),
-            fontsize=9,
+            fontsize=10.5,
             color="black",
             zorder=7,
             path_effects=[pe.withStroke(linewidth=2.2, foreground="white")]
         ))
+    # adjust_text(
+    #     texts,
+    #     ax=ax,
+    #     arrowprops=dict(arrowstyle="-", color="black", lw=0.6, alpha=0.7)
+    # )
+    x_vals = list(x)
+    y_vals = list(y)
     adjust_text(
         texts,
+        x=x_vals,
+        y=y_vals,
         ax=ax,
-        arrowprops=dict(arrowstyle="-", color="black", lw=0.6, alpha=0.7)
-    )
+        force_text=(1.0, 1.5),
+        force_points=(1.0, 1.5),
+        lim=1000,
+        arrowprops=dict(arrowstyle="->", color="black", lw=1.0, alpha=0.8)
+        )
 
 def halo_scatter(ax, x, y):
     ax.scatter(x, y, s=60, c="#0B2578", marker="o", linewidths=0, zorder=4)

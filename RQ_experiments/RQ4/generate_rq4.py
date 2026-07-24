@@ -27,7 +27,7 @@ def annotate_params_rq4(ax, x, y, params):
     for xi, yi, pi in zip(x_vals, y_vals, params):
         texts.append(ax.text(
             xi, yi, str(pi),
-            fontsize=14,
+            fontsize=17.5,
             color="black",
             zorder=7,
             path_effects=[pe.withStroke(linewidth=2.5, foreground="white")]
@@ -90,16 +90,16 @@ def plot_1x2_size(df_lcb, df_cxg, lcb_data, cxg_data, out_path, xlabel, ylabel,
             dy = law.demanded(eval_cx)
             ax.plot(cx, dy, c="#8B0000", linewidth=2.4, linestyle="-", label="Demanded Curve")
 
-        ax.legend(loc="best", fontsize=10)
-        ax.set_title(title, fontsize=16, fontweight="bold")
+        ax.legend(loc="best", fontsize=15)
+        ax.set_title(title, fontsize=21, fontweight="bold")
         ax.set_xlim([xmin, xmax])
         ax.set_ylim([ymin_ext, ymax_ext])
-        ax.tick_params(axis='both', labelsize=15)
+        ax.tick_params(axis='both', labelsize=18)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
-        ax.set_xlabel(xlabel, fontsize=16)
+        ax.set_xlabel(xlabel, fontsize=20)
 
-    axes[0].set_ylabel(ylabel, fontsize=16)
+    axes[0].set_ylabel(ylabel, fontsize=20)
 
     labels = ["Weakest (1)", "Weak (2)", "Moderate (3)", "Strong (4)", "Strongest (5)"]
     cbar = fig.colorbar(
@@ -110,7 +110,7 @@ def plot_1x2_size(df_lcb, df_cxg, lcb_data, cxg_data, out_path, xlabel, ylabel,
         pad=0.08,
         fraction=0.1
     )
-    cbar.ax.set_xticklabels(labels, fontsize=13.5, fontweight="bold")
+    cbar.ax.set_xticklabels(labels, fontsize=15, fontweight="bold")
 
     plt.savefig(out_path, bbox_inches="tight", dpi=400)
     print(f"Plot saved to {out_path}")

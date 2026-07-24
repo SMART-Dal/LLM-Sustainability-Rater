@@ -139,23 +139,23 @@ def plot_weight_grid(rows, out_path, annotate=False):
             ax.set_ylim([-0.05, 1.05])
             ax.set_xticks([0, 0.5, 1.0])
             ax.set_yticks([0, 0.5, 1.0])
-            ax.tick_params(labelsize=11)
+            ax.tick_params(labelsize=13)
             ax.set_box_aspect(1)
             for side in ("top", "right"):
                 ax.spines[side].set_visible(False)
             if r == 0:
-                ax.set_title(rf"$w_e = {w_e:.1f}$", fontsize=15, fontweight="bold")
+                ax.set_title(rf"$w_e = {w_e:.1f}$", fontsize=18, fontweight="bold")
 
-        axes[r, 0].annotate(row["label"], xy=(-0.42, 0.5), xycoords="axes fraction",
+        axes[r, 0].annotate(row["label"], xy=(-0.35, 0.5), xycoords="axes fraction",
                             rotation=90, ha="center", va="center",
-                            fontsize=14, fontweight="bold")
+                            fontsize=15, fontweight="bold")
 
-    fig.supxlabel("Energy Efficiency", fontsize=16)
-    fig.supylabel("Accuracy", fontsize=16)
+    fig.supxlabel("Energy Efficiency", fontsize=20)
+    fig.supylabel("Accuracy", fontsize=20)
 
     cbar = fig.colorbar(im, ax=axes.ravel().tolist(), orientation="horizontal",
-                        ticks=range(5), pad=0.02, shrink=0.5, aspect=40)
-    cbar.ax.set_xticklabels(RATING_LABELS, fontsize=12, fontweight="bold")
+                        ticks=range(5), pad=0.02, shrink=0.75, aspect=40)
+    cbar.ax.set_xticklabels(RATING_LABELS, fontsize=14, fontweight="bold")
 
     fig.savefig(out_path, bbox_inches="tight", dpi=400)
     plt.close(fig)
@@ -176,19 +176,20 @@ def plot_continuity(continuity, out_path):
             ax.axhline(0, color="grey", lw=0.8, ls=":")
             # ax.set_ylim(-0.55, 1.08)
             ax.grid(True, alpha=0.25)
+            ax.tick_params(labelsize=16)
             for side in ("top", "right"):
                 ax.spines[side].set_visible(False)
             if r == 0:
-                ax.set_title(method.upper(), fontsize=15, fontweight="bold")
+                ax.set_title(method.upper(), fontsize=18, fontweight="bold")
             if c == 0:
-                ax.set_ylabel(f"{task_label}\nSpearman $\\rho$", fontsize=13)
+                ax.set_ylabel(f"{task_label}\nSpearman $\\rho$", fontsize=20)
             if r == len(TASKS) - 1:
-                ax.set_xlabel("Energy weight $w_e$", fontsize=13)
+                ax.set_xlabel("Energy weight $w_e$", fontsize=20)
             if r == 0:
                 ax.set_ylim(0.2, 1.05) # Specific limits for top row
             else:
                 ax.set_ylim(-0.5, 1.05) # Specific limits for bottom row
-    axes[0, 0].legend(loc="lower left", fontsize=10, framealpha=0.9)
+    axes[0, 0].legend(loc="lower left", fontsize=17, framealpha=0.9)
     fig.tight_layout()
     fig.savefig(out_path, bbox_inches="tight", dpi=400)
     plt.close(fig)
@@ -215,12 +216,13 @@ def plot_sensitivity(sensitivity, out_path):
         ax.axvline(0.5, color="grey", lw=0.8, ls=":")
         ax.set_ylim(-0.03, 1.03)
         ax.grid(True, alpha=0.25)
-        ax.set_title(title, fontsize=14, fontweight="bold")
-        ax.set_xlabel("Accuracy weight $w_a$", fontsize=13)
+        ax.set_title(title, fontsize=19, fontweight="bold")
+        ax.set_xlabel("Accuracy weight $w_a$", fontsize=16)
+        ax.tick_params(labelsize=16)
         for side in ("top", "right"):
             ax.spines[side].set_visible(False)
-    axes[0].set_ylabel("Relative standing", fontsize=13)
-    axes[0].legend(loc="upper center", fontsize=10, framealpha=0.9)
+    axes[0].set_ylabel("Relative standing", fontsize=19)
+    axes[0].legend(loc="upper center", fontsize=17, framealpha=0.9)
     fig.tight_layout()
     fig.savefig(out_path, bbox_inches="tight", dpi=400)
     plt.close(fig)

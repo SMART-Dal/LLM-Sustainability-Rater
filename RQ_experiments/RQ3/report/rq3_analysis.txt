@@ -25,13 +25,13 @@
    Rank scale is 1-5; OTER refits its curve on every perturbed sample.
 
    LiveCodeBench:
-      Balanced       (w_a=0.5, w_e=0.5)  OTER = 0.184 +/- 0.071   CIRC = 0.049 +/- 0.032
-      Accuracy-first (w_a=0.9, w_e=0.1)  OTER = 0.095 +/- 0.047   CIRC = 0.055 +/- 0.031
-      Energy-first   (w_a=0.1, w_e=0.9)  OTER = 0.232 +/- 0.118   CIRC = 0.072 +/- 0.038
+      Balanced       (w_a=0.5, w_e=0.5)  OTER = 0.186 +/- 0.071   CIRC = 0.049 +/- 0.032
+      Accuracy-first (w_a=0.9, w_e=0.1)  OTER = 0.096 +/- 0.047   CIRC = 0.055 +/- 0.031
+      Energy-first   (w_a=0.1, w_e=0.9)  OTER = 0.235 +/- 0.118   CIRC = 0.072 +/- 0.038
    CodeXGLUE:
-      Balanced       (w_a=0.5, w_e=0.5)  OTER = 0.320 +/- 0.173   CIRC = 0.082 +/- 0.042
+      Balanced       (w_a=0.5, w_e=0.5)  OTER = 0.315 +/- 0.174   CIRC = 0.082 +/- 0.042
       Accuracy-first (w_a=0.9, w_e=0.1)  OTER = 0.231 +/- 0.070   CIRC = 0.176 +/- 0.053
-      Energy-first   (w_a=0.1, w_e=0.9)  OTER = 0.240 +/- 0.116   CIRC = 0.065 +/- 0.039
+      Energy-first   (w_a=0.1, w_e=0.9)  OTER = 0.242 +/- 0.117   CIRC = 0.065 +/- 0.039
 
 4. WEIGHT SENSITIVITY (archetype standing vs accuracy weight w_a)
 
