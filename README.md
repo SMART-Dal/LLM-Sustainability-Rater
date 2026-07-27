@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository is the replication package for **SEAL**, a framework that benchmarks Code Language Models (*CLMs*) jointly on **energy efficiency**, **functional correctness (accuracy)**, and **model size**, and reports each on a unified **1–5** scale. Instead of collapsing these competing dimensions into a single opaque score, BRACE decouples the evaluation into three interpretable **pairwise profiles** — energy–accuracy, size–accuracy, and size–energy.
+This repository is the replication package for **SEAL**, a framework that benchmarks Code Language Models (*CLMs*) jointly on **energy efficiency**, **functional correctness (accuracy)**, and **model size**, and reports each on a unified **1–5** scale. Instead of collapsing these competing dimensions into a single opaque score, SEAL decouples the evaluation into three interpretable **pairwise profiles** — energy–accuracy, size–accuracy, and size–energy.
 
 We benchmark **33** state-of-the-art open-source *CLMs* on two software-engineering tasks — code generation ([LiveCodeBench](https://livecodebench.github.io/)) and code summarization ([CodeXGLUE](https://github.com/microsoft/CodeXGLUE)). Energy is measured locally with [CodeGreen](https://github.com/SMART-Dal/CodeGreen); accuracy and generation run on top of the [LM-Evaluation-Harness](https://github.com/EleutherAI/lm-evaluation-harness).
 
@@ -36,7 +36,7 @@ High-level map of the most relevant parts of the repo.
 │   │   ├── LiveCodeBench/        # code generation (pass@1)
 │   │   └── code_x_glue/          # code summarization (smoothed BLEU)
 │   ├── results/                 # result files (see "Result files" below)
-│   └── rating_llms/             # the BRACE rating methods
+│   └── rating_llms/             # the SEAL rating methods
 │       ├── methods/             # circ, oter, size_acc, size_ene
 │       ├── validation/          # statistical validation suites (RQ1–RQ4)
 │       └── utils/
