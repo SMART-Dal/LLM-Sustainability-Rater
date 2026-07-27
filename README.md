@@ -1,17 +1,16 @@
-# BRACE: Unified Benchmarking of Accuracy, Energy, and Size for Code Language Models
+# SEAL: Benchmarking the Size, Energy, and Accuracy Trade-offs of Code Language Models 
 
 ## Overview
-**[Pre-print: https://arxiv.org/abs/2511.07698](https://arxiv.org/abs/2511.07698)**
 
-This repository is the replication package for **BRACE**, a framework that benchmarks Code Language Models (*CLMs*) jointly on **energy efficiency**, **functional correctness (accuracy)**, and **model size**, and reports each on a unified **1–5** scale. Instead of collapsing these competing dimensions into a single opaque score, BRACE decouples the evaluation into three interpretable **pairwise profiles** — energy–accuracy, size–accuracy, and size–energy.
+This repository is the replication package for **SEAL**, a framework that benchmarks Code Language Models (*CLMs*) jointly on **energy efficiency**, **functional correctness (accuracy)**, and **model size**, and reports each on a unified **1–5** scale. Instead of collapsing these competing dimensions into a single opaque score, BRACE decouples the evaluation into three interpretable **pairwise profiles** — energy–accuracy, size–accuracy, and size–energy.
 
 We benchmark **33** state-of-the-art open-source *CLMs* on two software-engineering tasks — code generation ([LiveCodeBench](https://livecodebench.github.io/)) and code summarization ([CodeXGLUE](https://github.com/microsoft/CodeXGLUE)). Energy is measured locally with [CodeGreen](https://github.com/SMART-Dal/CodeGreen); accuracy and generation run on top of the [LM-Evaluation-Harness](https://github.com/EleutherAI/lm-evaluation-harness).
 
-<img src="./brace.jpg" alt="BRACE overview" style="width:35%; height:auto; display:block; margin:auto;">
+<img src="./seal.jpg" alt="SEAL overview" style="width:35%; height:auto; display:block; margin:auto;">
 
 <br></br>
 
-> **Abstract**: The rapid adoption of AI in software development calls for evaluating the environmental cost of code models alongside their functional correctness. While prior studies have examined sustainability in large language models, they lack a systematic and interpretable framework for jointly evaluating the accuracy, energy, and size trade-offs of Code Language Models (*CLMs*). We present **BRACE**, a framework that benchmarks *CLMs* across energy efficiency, functional correctness, and model size, and reports them on a unified 1–5 scale. Rather than collapsing these competing dimensions into a single opaque score, BRACE decouples the evaluation into three interpretable pairwise profiles. For the energy–accuracy trade-off, we propose two rating methods: **Concentric Incremental Rating Circles (CIRC)** provides deterministic, distance-based rankings with static trade-offs that resist outliers, and **Observation to Expectation Rating (OTER)** provides trend-aware evaluation with dynamic trade-offs that capture the complex correlation between energy and accuracy. We extend both methods with priority weighting so users can tune the relative importance of accuracy and energy. To account for deployment scale, we further introduce scaling-law-based **Performance Efficiency** and **Structural Efficiency** metrics that assess how effectively a model converts its size into accuracy and into energy savings. Benchmarking 33 *CLMs*, we find that models generally perform better on summarization, and that small model size does not by itself secure efficiency — what separates models is how densely they convert parameters into capability, not raw scale.
+> Rapid AI adoption in software development demands evaluating code models' environmental costs alongside functional correctness. While prior studies examine large language models' sustainability, they lack a systematic, interpretable framework for jointly evaluating accuracy, energy, and size trade-offs in Code Language Models (*CLMs*). We present our evaluation framework **SEAL** to benchmark *CLMs* across energy efficiency, functional correctness, and size on a unified $1$--$5$ scale. **SEAL** decouples evaluation into three interpretable pairwise profiles, rather than one opaque score. For the energy-accuracy trade-off, we propose two priority-tunable rating methods: Concentric Incremental Rating Circles (*CIRC*) provides deterministic, distance-based rankings with static trade-offs, and Observation to Expectation Rating (*OTER*) provides trend-aware evaluations with dynamic trade-offs capturing complex correlations. To consider deployment scale, we introduce scaling-law-based *Performance* and *Structural efficiency* metrics, assessing how effectively models convert size into accuracy and energy savings. Benchmarking 33 state-of-the-art *CLMs* on code generation and summarization, we find that achieving high accuracy is more challenging than attaining energy efficiency. We also show that small models are not inherently efficient; what distinguishes models is how effectively they translate parameters into capability. These profiles act as portable, multi-dimensional tags across energy, accuracy, and size, guiding practitioners toward accurate, sustainable, and parameter-efficient models.
 
 ### Research Questions
 
@@ -138,6 +137,8 @@ Model sizes are fetched from HuggingFace (memory footprint in GB) and cached in 
 ```bash
 python RQ_experiments/RQ1/generate_rq1.py   # Table 1 + rq1_plot_grid.pdf  (22 models)
 python RQ_experiments/RQ2/generate_rq2.py   # Table 2 + rq2_plot_grid.pdf  (33 models)
+python RQ_experiments/RQ2/generate_rq2_evolution.py   # rq2_evolution_panels_codexglue.pdf + rq2_evolution_panels_livecodebench.pdf
+python RQ_experiments/RQ3/analyze_rq2.py    # rq2_analysis.txt (validation and statistical test)
 python RQ_experiments/RQ3/generate_rq3.py   # weight-sweep grid, continuity & sensitivity figs
 python RQ_experiments/RQ3/analyze_rq3.py    # rq3_analysis.txt (weighted-rating validation)
 python RQ_experiments/RQ4/generate_rq4.py   # Table 3 + size-acc / size-ene plots
@@ -191,7 +192,7 @@ The full **33-model** ratings (RQ2), the **weighted** ratings (RQ3), and the **s
 | RQ | Command | Key outputs (`RQ_experiments/RQ*/report/`) |
 |----|---------|--------------------------------------------|
 | RQ1 | `generate_rq1.py` | `rq1_table.{xlsx,tex}`, `rq1_plot_grid.pdf` |
-| RQ2 | `generate_rq2.py` | `rq2_table.{xlsx,tex}`, `rq2_plot_grid.pdf` |
+| RQ2 | `generate_rq2.py`, `generate_rq2_evolution.py`, `analyze_rq2.py` | `rq2_table.{xlsx,tex}`, `rq2_plot_grid.pdf`, `rq2_evolution_analysis.txt`, `rq2_evolution_panels_codexglue.pdf`, `rq2_evolution_panels_livecodebench.pdf`, `rq2_evolutuon_ratings.xlsx` |
 | RQ3 | `generate_rq3.py`, `analyze_rq3.py` | `rq3_weight_grid.pdf`, `rq3_continuity.pdf`, `rq3_weight_sensitivity.pdf`, `rq3_weight_ratings.xlsx`, `rq3_analysis.txt` |
 | RQ4 | `generate_rq4.py`, `analyze_rq4.py` | `rq4_table.{xlsx,tex}`, `rq4_size_acc_plot.pdf`, `rq4_size_ene_plot.pdf`, `rq4_analysis.txt` |
 
