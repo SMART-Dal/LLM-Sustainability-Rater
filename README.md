@@ -188,6 +188,12 @@ Normalized accuracy (`A`) and energy efficiency (`E`), with CIRC/OTER ratings pe
 
 The full **33-model** ratings (RQ2), the **weighted** ratings (RQ3), and the **size-efficiency** ratings ψ/τ (RQ4) are regenerated into `RQ_experiments/RQ2/report/`, `RQ3/report/`, and `RQ4/report/` respectively (`*_table.xlsx`, `*_table.tex`, and `*.pdf` figures).
 
+### RQ3 — Weight sensitivity
+
+<img src="./RQ_experiments/RQ3/report/rq3_weight_sensitivity.png" alt="RQ3 weight sensitivity" style="width:100%; height:auto; display:block; margin:auto;">
+
+*Relative standing of dominant-objective archetypes (eff = 0.9, acc = 0.1 or vice versa) and a balanced one (0.5, 0.5) as the accuracy weight `w_a` increases, scored against a dense synthetic field. OTER depends on the per-task curve, while CIRC is geometric and task-independent.*
+
 ### Generated artifacts per RQ
 
 | RQ | Command | Key outputs (`RQ_experiments/RQ*/report/`) |
