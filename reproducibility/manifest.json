@@ -1,0 +1,436 @@
+{
+  "manifest_version": "1.0",
+  "results_file": "lm_eval/results/final_results_codegreen.jsonl",
+  "experiments_run": [
+    "FullRun_Codegreen_33Models_C2T_tf4.55_tosem-version_2026-05-14",
+    "FullRun_Codegreen_33Models_LCB_tf4.55_tosem-version_2026-05-13"
+  ],
+  "run_period": [
+    "2026-05-13T18:29:01.448527-03:00",
+    "2026-05-15T14:37:10.061011-03:00"
+  ],
+  "environment": "reproducibility/requirements.lock.txt (Python 3.10, Linux x86_64)",
+  "model_sizes": "lm_eval/rating_llms/model_sizes.json",
+  "models": [
+    {
+      "model": "deepseek-ai/deepseek-coder-6.7b-base",
+      "revision": "ce2207a8bfef3ee92bd7dd4cc31c52cfa0046912",
+      "revision_date": "2024-03-19T03:54:51+00:00",
+      "license": "other (deepseek-license)",
+      "params": 6740512768,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "bigcode/starcoderbase-1b",
+      "revision": "182f0165fdf8da9c9935901eec65c94337f01c11",
+      "revision_date": "2023-09-14T12:49:54+00:00",
+      "license": "bigcode-openrail-m",
+      "params": 1137207296,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "bigcode/starcoder2-3b",
+      "revision": "733247c55e3f73af49ce8e9c7949bf14af205928",
+      "revision_date": "2024-03-04T13:33:12+00:00",
+      "license": "bigcode-openrail-m",
+      "params": 3030371328,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "codellama/CodeLlama-7b-Instruct-hf",
+      "revision": "22cb240e0292b0b5ab4c17ccd97aa3a2f799cbed",
+      "revision_date": "2024-04-12T14:18:42+00:00",
+      "license": "llama2",
+      "params": 6738546688,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Qwen/Qwen2.5-Coder-3B-Instruct",
+      "revision": "488639f1ff808d1d3d0ba301aef8c11461451ec5",
+      "revision_date": "2025-01-12T02:04:23+00:00",
+      "license": "other (qwen-research)",
+      "params": 3085938688,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Qwen/Qwen2.5-Coder-7B-Instruct",
+      "revision": "c03e6d358207e414f1eca0bb1891e29f1db0e242",
+      "revision_date": "2025-01-12T02:03:41+00:00",
+      "license": "apache-2.0",
+      "params": 7615616512,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Qwen/Qwen2.5-Coder-1.5B",
+      "revision": "df3ce67c0e24480f20468b6ef2894622d69eb73b",
+      "revision_date": "2024-11-18T12:53:05+00:00",
+      "license": "apache-2.0",
+      "params": 1543714304,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "deepseek-ai/deepseek-coder-1.3b-base",
+      "revision": "c919139c3a9b4070729c8b2cca4847ab29ca8d94",
+      "revision_date": "2023-11-14T03:32:27+00:00",
+      "license": "other (deepseek-license)",
+      "params": 1346471936,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "deepseek-ai/deepseek-coder-7b-instruct-v1.5",
+      "revision": "2a050a4c59d687a85324d32e147517992117ed30",
+      "revision_date": "2024-02-05T03:38:36+00:00",
+      "license": "other (deepseek)",
+      "params": 6910365696,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "bigcode/starcoder2-7b",
+      "revision": "bb9afde76d7945da5745592525db122d4d729eb1",
+      "revision_date": "2024-06-11T08:15:50+00:00",
+      "license": "bigcode-openrail-m",
+      "params": 7173923840,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Salesforce/codegen-350M-mono",
+      "revision": "d9107f71cca463240db1143f4a75a927a27fcb27",
+      "revision_date": "2025-01-31T20:16:47+00:00",
+      "license": "bsd-3-clause",
+      "params": 356712448,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Qwen/Qwen2.5-Coder-0.5B",
+      "revision": "8123ea2e9354afb7ffcc6c8641d1b2f5ecf18301",
+      "revision_date": "2024-11-18T12:52:36+00:00",
+      "license": "apache-2.0",
+      "params": 494032768,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "01-ai/Yi-Coder-9B",
+      "revision": "bc6e63fd26a654ee42dba737a553310bfa01dc5d",
+      "revision_date": "2024-09-23T04:22:39+00:00",
+      "license": "apache-2.0",
+      "params": 8829407232,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "rombodawg/rombos_Replete-Coder-Llama3-8B",
+      "revision": "938a45789cf94821ef6b12c98dc76622a0fa936a",
+      "revision_date": "2024-10-06T07:50:33+00:00",
+      "license": "other (llama-3)",
+      "params": 8030261248,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "uukuguy/speechless-code-mistral-7b-v1.0",
+      "revision": "1862e0a712efc6002112e9c1235a197d58419b37",
+      "revision_date": "2023-12-30T11:27:23+00:00",
+      "license": "apache-2.0",
+      "params": 7241732096,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "stabilityai/stable-code-3b",
+      "revision": "5cee3fa2905e7a03c4a1b0bc02f39da7ceaa6cb5",
+      "revision_date": "2024-07-10T12:13:37+00:00",
+      "license": "other (Stability AI Community License)",
+      "params": 2795443200,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "codellama/CodeLlama-7b-Python-hf",
+      "revision": "d4178f5d2eead875e627ec487b23679266319b7f",
+      "revision_date": "2024-04-12T14:16:26+00:00",
+      "license": "llama2",
+      "params": 6738415616,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "ByteDance-Seed/Seed-Coder-8B-Instruct",
+      "revision": "1c5af72afa21c22c9272a0b60a3a404195e88fcd",
+      "revision_date": "2025-06-06T02:18:40+00:00",
+      "license": "mit",
+      "params": 8250462208,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Qwen/CodeQwen1.5-7B-Chat",
+      "revision": "7b0cc3380fe815e6f08fe2f80c03e05a8b1883d8",
+      "revision_date": "2024-04-30T07:18:34+00:00",
+      "license": "other (tongyi-qianwen)",
+      "params": 7250284544,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "ise-uiuc/Magicoder-S-DS-6.7B",
+      "revision": "b3ed7cb1578a3643ceaf2ebf996a3d8e85f75d8f",
+      "revision_date": "2024-03-06T07:40:23+00:00",
+      "license": "other (deepseek)",
+      "params": 6740512768,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "ibm-granite/granite-8b-code-base-4k",
+      "revision": "d21e874b592aebc1a355d203e932d9055574b685",
+      "revision_date": "2026-04-25T12:34:58+00:00",
+      "license": "apache-2.0",
+      "params": 8054910976,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "Salesforce/codegen-2B-mono",
+      "revision": "0b1d0b33f26b1416f66f0ecf07cf6a29438c95ea",
+      "revision_date": "2025-01-31T20:26:18+00:00",
+      "license": "bsd-3-clause",
+      "params": 2779356160,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "uukuguy/speechless-zephyr-code-functionary-7b",
+      "revision": "d66fc775ece679966e352195c42444e9c70af7fa",
+      "revision_date": "2024-01-25T07:15:51+00:00",
+      "license": "apache-2.0",
+      "params": 7241732096,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "infly/OpenCoder-8B-Instruct",
+      "revision": "01badbbf10c2dfd7e2a0b5f570065ef44548576c",
+      "revision_date": "2024-11-14T05:52:08+00:00",
+      "license": "other (inf)",
+      "params": 7771262976,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "ShahriarFerdoush/llama-3.2-1b-code-instruct",
+      "revision": "d94cdb4c0f463b38c08ae84caa74fc59062a10c0",
+      "revision_date": "2026-01-01T02:54:19+00:00",
+      "license": "apache-2.0",
+      "params": 1235814400,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "m-a-p/OpenCodeInterpreter-DS-6.7B",
+      "revision": "60b89884df814590abd76757a6db4a527cbdfc91",
+      "revision_date": "2024-03-03T11:45:14+00:00",
+      "license": "apache-2.0",
+      "params": 6740512768,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "ricdomolm/mini-coder-1.7b",
+      "revision": "ea686024d9522260933aeed436e9939b1912ca15",
+      "revision_date": "2025-09-30T21:50:07+00:00",
+      "license": "mit",
+      "params": 1720574976,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "google/codegemma-2b",
+      "revision": "e7583edabd3dd48a9c705974a9456852f1205ab1",
+      "revision_date": "2024-08-07T18:27:30+00:00",
+      "license": "gemma",
+      "params": 2506172416,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "bigatuna/Qwen3-1.7B-Sushi-Coder",
+      "revision": "567aee53d6ed1c14e6b34acc7e40148f8f960e6c",
+      "revision_date": "2026-01-02T22:59:42+00:00",
+      "license": "apache-2.0",
+      "params": 1720574976,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "beowolx/CodeNinja-1.0-OpenChat-7B",
+      "revision": "9934c04c767e6ae0f792712a060f02915391d4ec",
+      "revision_date": "2023-12-22T21:03:44+00:00",
+      "license": "mit",
+      "params": 7241748480,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled",
+      "revision": "3c1c82b4c729e60f53a6e178879cc6fa90371602",
+      "revision_date": "2026-04-02T10:19:59+00:00",
+      "license": "apache-2.0",
+      "params": 3085938688,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "google/codegemma-7b-it",
+      "revision": "078cdc51070553d1636d645c9a238f3b0914459a",
+      "revision_date": "2024-08-07T18:27:26+00:00",
+      "license": "gemma",
+      "params": 8537680896,
+      "source": "hub",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    },
+    {
+      "model": "dcostenco/prism-coder-7b",
+      "revision": "38d20c1a3c602c6109a75562caea86f9d6de6e8a",
+      "revision_date": null,
+      "license": "apache-2.0",
+      "params": 7615616512,
+      "source": "local HF cache (repository no longer available on the Hub)",
+      "tasks": [
+        "code2text_python",
+        "livecodebench"
+      ]
+    }
+  ],
+  "datasets": [
+    {
+      "task": "livecodebench",
+      "dataset": "livecodebench/code_generation_lite",
+      "revision": "0fe84c3912ea0c4d4a78037083943e8f0c4dd505",
+      "revision_date": "2025-06-05T17:18:27+00:00",
+      "config": {
+        "version_tag": "release_v6",
+        "split": "test"
+      },
+      "license": "cc (variant not specified on the card)"
+    },
+    {
+      "task": "code2text_python",
+      "dataset": "CM/codexglue_code2text_python",
+      "revision": "7bccd264f93b53bd85b20ca84891f987d78245b4",
+      "revision_date": "2023-04-22T01:52:50+00:00",
+      "config": {
+        "split": "test",
+        "examples": "first 500"
+      },
+      "license": "C-UDA (CodeXGLUE data license; source: CodeSearchNet)"
+    }
+  ]
+}

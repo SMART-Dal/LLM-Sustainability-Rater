@@ -53,6 +53,11 @@ def calculate_weights(w_a, w_e):
 
 def get_model_size_gb(model_name: str) -> float:
     par_dir = Path(__file__).parent.parent
+    # frozen, versioned sizes of the paper's models (see reproducibility/build_manifest.py)
+    manifest = json.loads((par_dir / "model_sizes.json").read_text())["models"]
+    if model_name in manifest:
+        return manifest[model_name]["size_gb"]
+
     cache_dir = par_dir / "data" / "acc_size"
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / "model_sizes_cache.json"

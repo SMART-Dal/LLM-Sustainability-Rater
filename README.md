@@ -39,10 +39,12 @@ High-level map of the most relevant parts of the repo.
 │   └── rating_llms/             # the SEAL rating methods
 │       ├── methods/             # circ, oter, size_acc, size_ene
 │       ├── validation/          # statistical validation suites (RQ1–RQ4)
+│       ├── model_sizes.json     # frozen, versioned model sizes used by RQ4
 │       └── utils/
-└── RQ_experiments               # scripts that reproduce the paper's tables/figures
-    ├── RQ1/  RQ2/  RQ3/  RQ4/    # generate_*.py / analyze_*.py -> report/
-    └── Motivation/
+├── RQ_experiments               # scripts that reproduce the paper's tables/figures
+│   ├── RQ1/  RQ2/  RQ3/  RQ4/    # generate_*.py / analyze_*.py -> report/
+│   └── Motivation/
+└── reproducibility              # manifest of exact model/dataset revisions + lockfile
 ```
 
 ### Result files (`lm_eval/results/`)
@@ -66,6 +68,12 @@ source venv/bin/activate
 pip install --no-cache-dir -e .
 ```
 
+For the exact, fully pinned environment install from the lockfile instead:
+```bash
+pip install --require-hashes -r reproducibility/requirements.lock.txt
+pip install --no-deps -e .
+```
+
 ### Replication notes (pinning)
 
 To reproduce the **accuracy** numbers in `lm_eval/results/`, pin the generation stack after the editable install:
@@ -77,7 +85,7 @@ To reproduce the **accuracy** numbers in `lm_eval/results/`, pin the generation 
 ## Usage
 
 ### 0. Environment
-Create a `.env` file with your HuggingFace token (used to look up model sizes for RQ4):
+Create a `.env` file with your HuggingFace token (used to download models; RQ4 reads the sizes of the paper's 33 models from `lm_eval/rating_llms/model_sizes.json` and only queries the Hub for models not listed there):
 ```
 HF_TOKEN=YOUR_TOKEN
 ```
@@ -202,6 +210,76 @@ The full **33-model** ratings (RQ2), the **weighted** ratings (RQ3), and the **s
 | RQ2 | `generate_rq2.py`, `generate_rq2_evolution.py`, `analyze_rq2.py` | `rq2_table.{xlsx,tex}`, `rq2_plot_grid.pdf`, `rq2_evolution_analysis.txt`, `rq2_evolution_panels_codexglue.pdf`, `rq2_evolution_panels_livecodebench.pdf`, `rq2_evolutuon_ratings.xlsx` |
 | RQ3 | `generate_rq3.py`, `analyze_rq3.py` | `rq3_weight_grid.pdf`, `rq3_continuity.pdf`, `rq3_weight_sensitivity.pdf`, `rq3_weight_ratings.xlsx`, `rq3_analysis.txt` |
 | RQ4 | `generate_rq4.py`, `analyze_rq4.py` | `rq4_table.{xlsx,tex}`, `rq4_size_acc_plot.pdf`, `rq4_size_ene_plot.pdf`, `rq4_analysis.txt` |
+
+---
+
+## Reproducibility Manifest
+
+| File | What it pins |
+|------|--------------|
+| `reproducibility/manifest.json` | Exact Hugging Face revision (commit hash + date), license, and parameter count of all 33 models and both datasets, plus the run labels and run period of `final_results_codegreen.jsonl`. |
+| `lm_eval/rating_llms/model_sizes.json` | Versioned model sizes (GiB of weight files) used by the RQ4 size-efficiency ratings; read by `get_model_size_gb`, so RQ4 needs no Hub lookup. |
+| `reproducibility/requirements.lock.txt` | Full dependency closure of `pyproject.toml` (150 packages) with exact versions and sha256 hashes (Python 3.10, Linux x86_64). |
+| `reproducibility/build_manifest.py` | Regenerates the two JSON files: for each model/dataset it takes the last commit on `main` at or before the run (`main_run.py` downloads `main` right before running). |
+| `reproducibility/build_lock.py` | Regenerates the lockfile by resolving the `pyproject.toml` pins with pip (dry run, nothing installed). |
+
+---
+
+## Data License and Provenance
+
+**Datasets.** Both benchmarks are loaded from the Hugging Face Hub at the revisions below (see `reproducibility/manifest.json`).
+
+| Task | Dataset | Revision | What we use | Source and license |
+|------|---------|----------|-------------|--------------------|
+| Code generation | [`livecodebench/code_generation_lite`](https://huggingface.co/datasets/livecodebench/code_generation_lite) (`release_v6`) | `0fe84c3912` | 150 test problems from index 100 on, balanced over difficulty (easy/medium/hard) and test type (stdin/functional) | Contest problems from LeetCode, AtCoder, and Codeforces collected by [LiveCodeBench](https://livecodebench.github.io/); dataset card license: `cc` (variant not specified) |
+| Code summarization | [`CM/codexglue_code2text_python`](https://huggingface.co/datasets/CM/codexglue_code2text_python) | `7bccd264f9` | First 500 test examples | [CodeXGLUE](https://github.com/microsoft/CodeXGLUE) Code-to-Text (Python), derived from CodeSearchNet (public GitHub repositories); CodeXGLUE data license: C-UDA |
+
+**Models.** All 33 models are open-weight checkpoints from the Hugging Face Hub, pinned to the commit that `main` pointed to when the experiments ran. We only run inference for research evaluation and do not redistribute any weights; each model remains under the license declared on its model card.
+
+<details>
+<summary>Revision, license, and size of each model</summary>
+
+| Model | Revision | License | Params |
+|-------|----------|---------|-------:|
+| deepseek-ai/deepseek-coder-6.7b-base | `ce2207a8bf` | other (deepseek-license) | 6.74B |
+| bigcode/starcoderbase-1b | `182f0165fd` | bigcode-openrail-m | 1.14B |
+| bigcode/starcoder2-3b | `733247c55e` | bigcode-openrail-m | 3.03B |
+| codellama/CodeLlama-7b-Instruct-hf | `22cb240e02` | llama2 | 6.74B |
+| Qwen/Qwen2.5-Coder-3B-Instruct | `488639f1ff` | other (qwen-research) | 3.09B |
+| Qwen/Qwen2.5-Coder-7B-Instruct | `c03e6d3582` | apache-2.0 | 7.62B |
+| Qwen/Qwen2.5-Coder-1.5B | `df3ce67c0e` | apache-2.0 | 1.54B |
+| deepseek-ai/deepseek-coder-1.3b-base | `c919139c3a` | other (deepseek-license) | 1.35B |
+| deepseek-ai/deepseek-coder-7b-instruct-v1.5 | `2a050a4c59` | other (deepseek) | 6.91B |
+| bigcode/starcoder2-7b | `bb9afde76d` | bigcode-openrail-m | 7.17B |
+| Salesforce/codegen-350M-mono | `d9107f71cc` | bsd-3-clause | 0.36B |
+| Qwen/Qwen2.5-Coder-0.5B | `8123ea2e93` | apache-2.0 | 0.49B |
+| 01-ai/Yi-Coder-9B | `bc6e63fd26` | apache-2.0 | 8.83B |
+| rombodawg/rombos_Replete-Coder-Llama3-8B | `938a45789c` | other (llama-3) | 8.03B |
+| uukuguy/speechless-code-mistral-7b-v1.0 | `1862e0a712` | apache-2.0 | 7.24B |
+| stabilityai/stable-code-3b | `5cee3fa290` | other (Stability AI Community License) | 2.80B |
+| codellama/CodeLlama-7b-Python-hf | `d4178f5d2e` | llama2 | 6.74B |
+| ByteDance-Seed/Seed-Coder-8B-Instruct | `1c5af72afa` | mit | 8.25B |
+| Qwen/CodeQwen1.5-7B-Chat | `7b0cc3380f` | other (tongyi-qianwen) | 7.25B |
+| ise-uiuc/Magicoder-S-DS-6.7B | `b3ed7cb157` | other (deepseek) | 6.74B |
+| ibm-granite/granite-8b-code-base-4k | `d21e874b59` | apache-2.0 | 8.05B |
+| Salesforce/codegen-2B-mono | `0b1d0b33f2` | bsd-3-clause | 2.78B |
+| uukuguy/speechless-zephyr-code-functionary-7b | `d66fc775ec` | apache-2.0 | 7.24B |
+| infly/OpenCoder-8B-Instruct | `01badbbf10` | other (inf) | 7.77B |
+| ShahriarFerdoush/llama-3.2-1b-code-instruct | `d94cdb4c0f` | apache-2.0 | 1.24B |
+| m-a-p/OpenCodeInterpreter-DS-6.7B | `60b89884df` | apache-2.0 | 6.74B |
+| ricdomolm/mini-coder-1.7b | `ea686024d9` | mit | 1.72B |
+| google/codegemma-2b | `e7583edabd` | gemma | 2.51B |
+| bigatuna/Qwen3-1.7B-Sushi-Coder | `567aee53d6` | apache-2.0 | 1.72B |
+| beowolx/CodeNinja-1.0-OpenChat-7B | `9934c04c76` | mit | 7.24B |
+| ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled | `3c1c82b4c7` | apache-2.0 | 3.09B |
+| google/codegemma-7b-it | `078cdc5107` | gemma | 8.54B |
+| dcostenco/prism-coder-7b | `38d20c1a3c †` | apache-2.0 | 7.62B |
+
+† `dcostenco/prism-coder-7b` is no longer available on the Hub; its revision is taken from our local download (2026-05-11).
+
+</details>
+
+**Measurements.** All energy and accuracy values in `lm_eval/results/` were produced by us with CodeGreen and the LM-Evaluation-Harness on our own hardware; no third-party measurements are included.
 
 ---
 

@@ -1,0 +1,205 @@
+{
+  "manifest_version": "1.0",
+  "unit": "GiB (total size of the model's weight files: *.safetensors, else *.bin)",
+  "used_by": "lm_eval/rating_llms/utils/utils.py:get_model_size_gb (RQ4 size_acc / size_ene)",
+  "models": {
+    "deepseek-ai/deepseek-coder-6.7b-base": {
+      "size_gb": 12.555214919149876,
+      "params": 6740512768,
+      "revision": "ce2207a8bfef3ee92bd7dd4cc31c52cfa0046912",
+      "size_source": "weight files at revision"
+    },
+    "bigcode/starcoderbase-1b": {
+      "size_gb": 4.236455775797367,
+      "params": 1137207296,
+      "revision": "182f0165fdf8da9c9935901eec65c94337f01c11",
+      "size_source": "weight files at revision"
+    },
+    "bigcode/starcoder2-3b": {
+      "size_gb": 11.289063230156898,
+      "params": 3030371328,
+      "revision": "733247c55e3f73af49ce8e9c7949bf14af205928",
+      "size_source": "weight files at revision"
+    },
+    "codellama/CodeLlama-7b-Instruct-hf": {
+      "size_gb": 12.551552809774876,
+      "params": 6738546688,
+      "revision": "22cb240e0292b0b5ab4c17ccd97aa3a2f799cbed",
+      "size_source": "weight files at revision"
+    },
+    "Qwen/Qwen2.5-Coder-3B-Instruct": {
+      "size_gb": 5.7480549439787865,
+      "params": 3085938688,
+      "revision": "488639f1ff808d1d3d0ba301aef8c11461451ec5",
+      "size_source": "weight files at revision"
+    },
+    "Qwen/Qwen2.5-Coder-7B-Instruct": {
+      "size_gb": 14.185227327048779,
+      "params": 7615616512,
+      "revision": "c03e6d358207e414f1eca0bb1891e29f1db0e242",
+      "size_source": "weight files at revision"
+    },
+    "Qwen/Qwen2.5-Coder-1.5B": {
+      "size_gb": 2.8754278495907784,
+      "params": 1543714304,
+      "revision": "df3ce67c0e24480f20468b6ef2894622d69eb73b",
+      "size_source": "weight files at revision"
+    },
+    "deepseek-ai/deepseek-coder-1.3b-base": {
+      "size_gb": 2.508065512403846,
+      "params": 1346471936,
+      "revision": "c919139c3a9b4070729c8b2cca4847ab29ca8d94",
+      "size_source": "weight files at revision"
+    },
+    "deepseek-ai/deepseek-coder-7b-instruct-v1.5": {
+      "size_gb": 12.871588736772537,
+      "params": 6910365696,
+      "revision": "2a050a4c59d687a85324d32e147517992117ed30",
+      "size_source": "weight files at revision"
+    },
+    "bigcode/starcoder2-7b": {
+      "size_gb": 13.362528301775455,
+      "params": 7173923840,
+      "revision": "bb9afde76d7945da5745592525db122d4d729eb1",
+      "size_source": "weight files at revision"
+    },
+    "Salesforce/codegen-350M-mono": {
+      "size_gb": 0.7426064750179648,
+      "params": 356712448,
+      "revision": "d9107f71cca463240db1143f4a75a927a27fcb27",
+      "size_source": "weight files at revision"
+    },
+    "Qwen/Qwen2.5-Coder-0.5B": {
+      "size_gb": 0.920237809419632,
+      "params": 494032768,
+      "revision": "8123ea2e9354afb7ffcc6c8641d1b2f5ecf18301",
+      "size_source": "weight files at revision"
+    },
+    "01-ai/Yi-Coder-9B": {
+      "size_gb": 16.446099601686,
+      "params": 8829407232,
+      "revision": "bc6e63fd26a654ee42dba737a553310bfa01dc5d",
+      "size_source": "weight files at revision"
+    },
+    "rombodawg/rombos_Replete-Coder-Llama3-8B": {
+      "size_gb": 14.95755871385336,
+      "params": 8030261248,
+      "revision": "938a45789cf94821ef6b12c98dc76622a0fa936a",
+      "size_source": "weight files at revision"
+    },
+    "uukuguy/speechless-code-mistral-7b-v1.0": {
+      "size_gb": 13.488869826309383,
+      "params": 7241732096,
+      "revision": "1862e0a712efc6002112e9c1235a197d58419b37",
+      "size_source": "weight files at revision"
+    },
+    "stabilityai/stable-code-3b": {
+      "size_gb": 5.206956937909126,
+      "params": 2795443200,
+      "revision": "5cee3fa2905e7a03c4a1b0bc02f39da7ceaa6cb5",
+      "size_source": "weight files at revision"
+    },
+    "codellama/CodeLlama-7b-Python-hf": {
+      "size_gb": 12.551308669149876,
+      "params": 6738415616,
+      "revision": "d4178f5d2eead875e627ec487b23679266319b7f",
+      "size_source": "weight files at revision"
+    },
+    "ByteDance-Seed/Seed-Coder-8B-Instruct": {
+      "size_gb": 15.367714948952198,
+      "params": 8250462208,
+      "revision": "1c5af72afa21c22c9272a0b60a3a404195e88fcd",
+      "size_source": "weight files at revision"
+    },
+    "Qwen/CodeQwen1.5-7B-Chat": {
+      "size_gb": 13.504748620092869,
+      "params": 7250284544,
+      "revision": "7b0cc3380fe815e6f08fe2f80c03e05a8b1883d8",
+      "size_source": "weight files at revision"
+    },
+    "ise-uiuc/Magicoder-S-DS-6.7B": {
+      "size_gb": 25.110398143529892,
+      "params": 6740512768,
+      "revision": "b3ed7cb1578a3643ceaf2ebf996a3d8e85f75d8f",
+      "size_source": "weight files at revision"
+    },
+    "ibm-granite/granite-8b-code-base-4k": {
+      "size_gb": 15.003501743078232,
+      "params": 8054910976,
+      "revision": "d21e874b592aebc1a355d203e932d9055574b685",
+      "size_source": "weight files at revision"
+    },
+    "Salesforce/codegen-2B-mono": {
+      "size_gb": 5.302039614878595,
+      "params": 2779356160,
+      "revision": "0b1d0b33f26b1416f66f0ecf07cf6a29438c95ea",
+      "size_source": "weight files at revision"
+    },
+    "uukuguy/speechless-zephyr-code-functionary-7b": {
+      "size_gb": 13.977089956402779,
+      "params": 7241732096,
+      "revision": "d66fc775ece679966e352195c42444e9c70af7fa",
+      "size_source": "weight files at revision"
+    },
+    "infly/OpenCoder-8B-Instruct": {
+      "size_gb": 14.475136823952198,
+      "params": 7771262976,
+      "revision": "01badbbf10c2dfd7e2a0b5f570065ef44548576c",
+      "size_source": "weight files at revision"
+    },
+    "ShahriarFerdoush/llama-3.2-1b-code-instruct": {
+      "size_gb": 2.301899217069149,
+      "params": 1235814400,
+      "revision": "d94cdb4c0f463b38c08ae84caa74fc59062a10c0",
+      "size_source": "weight files at revision"
+    },
+    "m-a-p/OpenCodeInterpreter-DS-6.7B": {
+      "size_gb": 12.555214919149876,
+      "params": 6740512768,
+      "revision": "60b89884df814590abd76757a6db4a527cbdfc91",
+      "size_source": "weight files at revision"
+    },
+    "ricdomolm/mini-coder-1.7b": {
+      "size_gb": 3.204853840172291,
+      "params": 1720574976,
+      "revision": "ea686024d9522260933aeed436e9939b1912ca15",
+      "size_source": "weight files at revision"
+    },
+    "google/codegemma-2b": {
+      "size_gb": 4.668127626180649,
+      "params": 2506172416,
+      "revision": "e7583edabd3dd48a9c705974a9456852f1205ab1",
+      "size_source": "weight files at revision"
+    },
+    "bigatuna/Qwen3-1.7B-Sushi-Coder": {
+      "size_gb": 3.204853840172291,
+      "params": 1720574976,
+      "revision": "567aee53d6ed1c14e6b34acc7e40148f8f960e6c",
+      "size_source": "weight files at revision"
+    },
+    "beowolx/CodeNinja-1.0-OpenChat-7B": {
+      "size_gb": 13.48883917927742,
+      "params": 7241748480,
+      "revision": "9934c04c767e6ae0f792712a060f02915391d4ec",
+      "size_source": "weight files at revision"
+    },
+    "ryzdfm/qwen2.5-coder-3b-claude_opus_4.6-distilled": {
+      "size_gb": 5.7480549439787865,
+      "params": 3085938688,
+      "revision": "3c1c82b4c729e60f53a6e178879cc6fa90371602",
+      "size_source": "weight files at revision"
+    },
+    "google/codegemma-7b-it": {
+      "size_gb": 15.902697443962097,
+      "params": 8537680896,
+      "revision": "078cdc51070553d1636d645c9a238f3b0914459a",
+      "size_source": "weight files at revision"
+    },
+    "dcostenco/prism-coder-7b": {
+      "size_gb": 13.0385160446167,
+      "params": 7615616512,
+      "revision": "38d20c1a3c602c6109a75562caea86f9d6de6e8a",
+      "size_source": "FP16 estimate from model name (repo unavailable on the Hub)"
+    }
+  }
+}

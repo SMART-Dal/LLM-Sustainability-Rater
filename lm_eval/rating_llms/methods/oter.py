@@ -84,6 +84,9 @@ def approximate_regression_function(df, X_clean, deriv_inliers_all, les_quantile
             D[j, k] = k * zj ** (k - 1)
 
     cons = np.percentile(deriv_inliers_all, les_quantile) if deriv_inliers_all is not None else 0
+    # f(0) <= 1 and f' <= LES give f(1) <= 1 + LES, so LES must stay >= intercept - 1 (= -0.99);
+    # a steeper LES would make f(1) >= intercept impossible and leave the fit without a solution
+    cons = max(cons, intercept - 1.0)
     constraints = [
         D @ b <= cons,
         cp.sum(b) >= intercept,
